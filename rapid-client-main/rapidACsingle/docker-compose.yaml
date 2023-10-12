@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  acceleration_client:
+    build:
+      context: .
+    deploy:
+      replicas: 1
+    env_file:
+      - .env
+    environment:
+      AS_PORT: ${AS_PORT}
+      AS_PORT_SSL: ${AS_PORT_SSL}
+      DS_IP: ${DS_IP}
+      DS_PORT: ${DS_PORT}
+      AC_RM_PORT: ${AC_RM_PORT}
+      TASK_DEADLINE: ${TASK_DEADLINE}
+      TASK_CYCLES: ${TASK_CYCLES}
+
