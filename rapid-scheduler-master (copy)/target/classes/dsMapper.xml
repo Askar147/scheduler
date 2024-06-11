@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DS">
+    <select id="vmmInfoList" resultType="rapid.VmmInfo">
+        select * from vmm_info
+    </select>
+
+    <select id="vmmInfoListByLowUtil" resultType="rapid.VmmInfo">
+        select * from vmm_info order by cpuload asc
+    </select>
+
+    <select id="vmmInfoListByHighAllocatedCpu" resultType="rapid.VmmInfo">
+        select * from vmm_info order by allocatedcpu desc
+    </select>
+
+    <select id="getVmmInfo" parameterType="long" resultType="rapid.VmmInfo">
+        select * from vmm_info where vmmid = #{vmmid}
+    </select>
+
+    <select id="getVmmInfoByIp" parameterType="String" resultType="rapid.VmmInfo">
+        select * from vmm_info where ipv4 = #{ipv4}
+    </select>
+
+    <insert id="insertVmmInfo" parameterType="rapid.VmmInfo" useGeneratedKeys="true" keyProperty="vmmid" keyColumn="vmmid">
+        insert into vmm_info
+        (ipv4, mactype, macaddress, suspended, cpuload, allocatedcpu, cpufrequency, cpunums, freemem, availmem, powerusage, freegpu, gpunums, availtypes, timestamp)
+        values
+        (#{ipv4}, #{mactype}, #{macaddress}, #{suspended}, #{cpuload}, #{allocatedcpu}, #{cpufrequency}, #{cpunums}, #{freemem}, #{availmem}, #{powerusage}, #{freegpu}, #{gpunums}, #{availtypes}, now())
+
+        <selectKey keyProperty="vmmid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <update id="updateVmmInfo" parameterType="rapid.VmmInfo">
+        update vmm_info set
+                            ipv4 = #{ipv4}, mactype = #{mactype}, suspended = #{suspended},cpuload = #{cpuload}, allocatedcpu = IF(#{allocatedcpu}&lt;=0.0, 0.0, #{allocatedcpu}), cpufrequency = #{cpufrequency}, cpunums = #{cpunums}, freemem = #{freemem}, availmem = #{availmem}, powerusage = #{powerusage}, freegpu = #{freegpu}, gpunums = #{gpunums}, availtypes = #{availtypes}, timestamp = now()
+        where vmmid = #{vmmid}
+
+    </update>
+
+    <delete id="deleteVmmInfo" parameterType="long">
+        delete from vmm_info where  vmmid = #{vmmid}
+    </delete>
+
+    <update id="changeAllocatedcpuVmmInfo" parameterType="rapid.VmmInfo">
+        update vmm_info set
+                            allocatedcpu = IF((allocatedcpu + #{allocatedcpu})&lt;=0.0, 0.0, allocatedcpu + #{allocatedcpu})
+        where vmmid = #{vmmid}
+    </update>
+
+    <select id="userInfoList" resultType="rapid.UserInfo">
+        select * from user_info
+    </select>
+
+    <select id="getUserInfo" parameterType="long" resultType="rapid.UserInfo">
+        select * from user_info where userid = #{userid}
+    </select>
+
+    <insert id="insertUserInfo" parameterType="rapid.UserInfo" useGeneratedKeys="true" keyProperty="userid" keyColumn="userid">
+        insert into user_info
+        (ipv4, qosparam, deadline, cycles, vcpu, memory, timestamp)
+        values
+        (#{ipv4}, #{qosparam}, TIMESTAMP(#{deadline}), #{cycles}, #{vcpu}, #{memory}, now())
+
+        <selectKey keyProperty="userid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <update id="updateUserInfo" parameterType="rapid.UserInfo">
+        update user_info set
+                             ipv4 = #{ipv4}, qosparam = #{qosparam}, deadline=TIMESTAMP(#{deadline}), cycles=#{cycles}, vcpu=#{vcpu}, memory=#{memory}, timestamp = now()
+        where userid = #{userid}
+
+    </update>
+
+    <delete id="deleteUserInfo" parameterType="long">
+        delete from user_info where  userid = #{userid}
+    </delete>
+
+    <select id="vmInfoList" resultType="rapid.VmInfo">
+        select * from vm_info
+    </select>
+
+    <select id="helperVmInfoListByVmmid" parameterType="long" resultType="rapid.VmInfo">
+        select * from vm_info where vmmid = #{vmmid} and category = 1
+    </select>
+
+    <select id="getVmInfo" parameterType="long" resultType="rapid.VmInfo">
+        select * from vm_info where vmid = #{vmid}
+    </select>
+
+    <select id="getVmInfoByuserid" parameterType="long" resultType="rapid.VmInfo">
+        select * from vm_info where userid = #{userid} order by vmid desc limit 1
+    </select>
+
+    <insert id="insertVmInfo" parameterType="rapid.VmInfo" useGeneratedKeys="true" keyProperty="vmid" keyColumn="vmid">
+        insert into vm_info
+        (ipv4, port, vmmid, category, type, userid, offloadstatus, vmstatus, vcpu, memory, timestamp)
+        values
+        (#{ipv4}, #{port}, #{vmmid}, #{category}, #{type}, #{userid}, #{offloadstatus}, #{vmstatus}, #{vcpu}, #{memory}, now())
+
+        <selectKey keyProperty="vmid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <update id="updateVmInfo" parameterType="rapid.VmInfo">
+        update vm_info set
+                           ipv4 = #{ipv4}, port = #{port}, vmmid = #{vmmid}, category = #{category}, type = #{type}, userid = #{userid}, offloadstatus = #{offloadstatus}, vmstatus = #{vmstatus}, vcpu=#{vcpu}, memory=#{memory}, timestamp = now()
+        where vmid = #{vmid}
+
+    </update>
+
+    <delete id="deleteVmInfo" parameterType="long">
+        delete from vm_info where  vmid = #{vmid}
+    </delete>
+
+    <insert id="insertVmmStats" parameterType="rapid.VmmStats" useGeneratedKeys="true" keyProperty="statid" keyColumn="statid">
+        insert into vmm_stats
+        (vmmid, cpuload, allocatedcpu, freemem, availmem, powerusage, timestamp)
+        values
+        (#{vmmid}, #{cpuload}, #{allocatedcpu}, #{freemem}, #{availmem}, #{powerusage}, now())
+
+        <selectKey keyProperty="statid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <insert id="insertOffloadHistory" parameterType="rapid.OffloadHistory" useGeneratedKeys="true" keyProperty="offloadid" keyColumn="offloadid">
+        insert into offload_history
+        (vmmid, userid, deadline, vcpu, memory, cycles, timestamp)
+        values
+        (#{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now())
+
+        <selectKey keyProperty="offloadid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <update id="updateOffloadHistory" parameterType="rapid.OffloadHistory">
+        update offload_history set finished_timestamp=date_add(now(), interval -0 second) where offloadid = #{offloadid}
+    </update>
+
+    <select id="getOffloadHistoryByuservmmid" parameterType="rapid.OffloadHistory" resultType="rapid.OffloadHistory">
+        select * from offload_history where userid = #{userid} and vmmid = #{vmmid} and finished_timestamp IS NULL;
+    </select>
+
+    <insert id="insertRequestInfo" parameterType="rapid.RequestInfo" useGeneratedKeys="true" keyProperty="requestid" keyColumn="requestid">
+        insert into request_info
+        (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp)
+        values
+        (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now())
+
+        <selectKey keyProperty="requestid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
+        insert into wol_history
+        (vmmid, iswol, timestamp)
+        values
+        (#{vmmid}, #{iswol}, now())
+
+        <selectKey keyProperty="wolid" resultType="long" order="AFTER">
+            select LAST_INSERT_ID();
+        </selectKey>
+    </insert>
+
+    <select id="wolLast6Sec" parameterType="rapid.VmmInfo" resultType="int">
+        select count(*) from wol_history where vmmid = #{vmmid} and timestamp > DATE_SUB(NOW(), INTERVAL 6 SECOND);
+    </select>
+
+    <insert id="insertGlobalReading" parameterType="rapid.GlobalReadings">
+        insert into globalreadings
+        (activevmms, allocatedcpu, powerusagesum, powerusageavg, timestamp)
+        values
+        (#{activevmms}, #{allocatedcpu}, #{powerusagesum}, #{powerusageavg}, now())
+    </insert>
+
+    <select id="predictWorkload" resultType="float">
+        with
+            trend_line AS
+                (
+                    SELECT SLOPE,
+                           y_bar_max - x_bar_max * slope as intercept
+                    FROM
+                        (
+                            SELECT
+                                    SUM((timestamp - x_bar) * (allocatedcpu - y_bar)) / SUM((timestamp - x_bar) * (timestamp - x_bar)) as slope,
+                                    MAX(x_bar) as x_bar_max,
+                                    MAX(y_bar) as y_bar_max
+                            FROM
+                                (
+                                    SELECT
+                                        timestamp, AVG(timestamp) OVER() as x_bar
+                                            , allocatedcpu, AVG(allocatedcpu) OVER() as y_bar
+                                    FROM
+                                        (
+                                        SELECT * FROM globalreadings WHERE timestamp > DATE_SUB(NOW(), INTERVAL 1 MINUTE)
+                                        ) AS T0
+                                ) AS T1
+                        ) AS T2
+                )
+        SELECT
+            (DATE_ADD(NOW(), INTERVAL 2 MINUTE) * (SELECT slope FROM trend_line) + (SELECT intercept FROM trend_line)) AS prediction
+        FROM globalreadings LIMIT 1;
+    </select>
+</mapper>
