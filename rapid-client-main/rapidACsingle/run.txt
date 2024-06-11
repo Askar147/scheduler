@@ -1,1 +1,0 @@
-java -Djava.library.path=./Resources/libs -jar rapid-demo-linux-0.0.1-SNAPSHOT-with-ports.jar -rapid -conn clear
