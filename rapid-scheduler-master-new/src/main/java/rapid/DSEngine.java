@@ -629,33 +629,7 @@ public class DSEngine {
         int selectedVcpu;
         int selectedMemory;
         int minvcpu = 40;
-
-//	Vector<int> cpuload = new Vector<int>();
-//	Vector<int> cpufrequency= new Vector<int>();
-//	Vector<long> freemem = new Vector<long>();
-//	Vector<long> availmem = new Vector<long>();
-//	Vector<int> powerusage = new Vector<int>();
-//	Vector<int> allocatedcpu = new Vector<int>();
-//	int inf = 2148454455
-//       
-//
-//
-//	
-//	
-//	for (VmmInfo vmmInfo: vmmInfoList){
-//	
-//		cpuload.add(vmmInfo.getCpuload());
-//		cpufrequency.add(vmmInfo.getCpufrequency());
-//		freemem.add(vmmInfo.getFreemem());
-//		availmem.add(vmmInfo.getAvailmem());
-//		powerusage.add(vmmInfo.getPowerusage());
-//		allocatedcpu.add(vmmInfo.getAllocatedcpu());}
-//	}
-
-//TODO node_id = Model(cpuload,cpufrequency,freemem,availmem,powerusage,allocatedcpu);
-
-	
-
+/*
       for (VmmInfo vmmInfo: vmmInfoList) {
             if (vmmInfo.getSuspended() == 0) {
 
@@ -717,7 +691,7 @@ public class DSEngine {
 		}
 	}
 
-
+*/
 
 
 
