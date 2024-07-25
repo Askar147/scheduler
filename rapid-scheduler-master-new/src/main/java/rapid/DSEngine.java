@@ -241,7 +241,7 @@ public class DSEngine {
             DSManager.insertRequestInfo(requestInfo);
 
 	    logger.info("Beofore Calling THE METHOD FINDVAILMAHCINES");
-            VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles);
+            VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles, requestInfo.getRequestid());
 
             ArrayList<String> ipList = new ArrayList<>();
             if (vmmConfig != null) {
@@ -337,41 +337,76 @@ public class DSEngine {
 
 
 private void processQueue() {
-    while (true) {
-        RequestInfo requestInfo = requestQueue.poll();
-        if (requestInfo != null) {
-            VmmConfig vmmConfig = findAvailMachines(
-                requestInfo.getUserid(),
-                requestInfo.getVcpu(),
-                (int) requestInfo.getMemory(),
-                0, // Assuming gpuCores is 0
-                requestInfo.getDeadline(),
-                requestInfo.getCycles()
-            );
-            if (vmmConfig != null) {
-                DSManager.updateRequestInfoWithVmm(requestInfo.getRequestid(), vmmConfig);
-                notifyClient(requestInfo, vmmConfig);
-            } else {
-                // Requeue the request if no available machines found
-                requestQueue.add(requestInfo);
+    try{
+        while (!requestQueue.isEmpty()) {
+            RequestInfo requestInfo = requestQueue.poll();
+            if (requestInfo != null) {
+                VmmConfig vmmConfig = findAvailMachines(
+                    requestInfo.getUserid(),
+                    requestInfo.getVcpu(),
+                    (int) requestInfo.getMemory(),
+                    0, // Assuming gpuCores is 0
+                    requestInfo.getDeadline(),
+                    requestInfo.getCycles(),
+                    requestInfo.getRequestid()
+                );
+                if (vmmConfig != null) {
+                    notifyClient(requestInfo, vmmConfig);
+                } else {
+                    // Requeue the request if no available machines found
+                    requestQueue.add(requestInfo);
+                    break;
+                }
             }
         }
-        // Sleep or wait before processing the next item
-        try {
-            Thread.sleep(1000); // Adjust as needed
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+    }catch (Exception e) {
+        String message = "";
+        for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+            message = message + System.lineSeparator() + stackTraceElement.toString();
         }
+        logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
+        e.printStackTrace();
     }
 }
 
 private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
     try (Socket clientSocket = new Socket(requestInfo.getClientIp(), requestInfo.getClientPort());
          ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
+
+        ArrayList<String> ipList = new ArrayList<>();
+        if (vmmConfig != null) {
+            ipList.add(vmmConfig.getVmmIP());
+            incrementAllocatedcpu(vmmConfig);
+        }
+
+        if (ipList.size() == 0) {
+            out.writeByte(RapidMessages.ERROR);
+            out.flush();
+            return;
+        }
+
+        MainScheduler scheduler = MainScheduler.getInstance();
+
+        long newUserid = 0;
+        if (requestInfo.getUserid() < 0) {
+            UserInfo userInfo = new UserInfo();
+
+            InetSocketAddress addr = (InetSocketAddress) clientSocket.getRemoteSocketAddress();
+            userInfo.setIpv4(getIpAddress(addr.getAddress().getAddress()));
+            userInfo.setDeadline(requestInfo.getDeadline());
+            userInfo.setCycles(requestInfo.getCycles());
+            userInfo.setVcpu(vmmConfig.getVcpu());
+            userInfo.setMemory(vmmConfig.getMemory());
+
+            newUserid = DSManager.insertUserInfo(userInfo);
+        }
+
+
         out.writeInt(RapidMessages.OK);
-        out.writeLong(requestInfo.getRequestid());
-        out.writeUTF(vmmConfig.getVmmIP());
-        out.writeInt(vmmConfig.getVmmPort());
+        out.writeLong(newUserid);
+        out.writeObject(ipList);
+        out.writeUTF(scheduler.getIpv4());
+        out.writeInt(scheduler.getPort());
         out.flush();
     } catch (IOException e) {
         e.printStackTrace();
@@ -556,6 +591,7 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
                     OffloadHistory offloadHistory = DSManager.getOffloadHistoryByuservmmid(vmInfo.getVmmid(), vmInfo.getUserid());
                     DSManager.updateOffloadHistory(offloadHistory);
                     decrementAllocatedcpu(vmInfo.getIpv4(), vmInfo.getUserid());
+                    processQueue();
 //                    VmmInfo vmmInfo = DSManager.getVmmInfo(vmInfo.getVmmid());
 //                    UserInfo userInfo = DSManager.getUserInfo(vmInfo.getUserid());
 //                    float allocatedcpuDelta = - (float) userInfo.getVcpu() / vmmInfo.getCpunums();
@@ -684,7 +720,7 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
         return ipAddress;
     }
 
-    private synchronized VmmConfig findAvailMachines(long userid, int vcpuNum, int memSize, int gpuCores, String deadline, long cycles) throws IOException, InterruptedException {
+    private synchronized VmmConfig findAvailMachines(long userid, int vcpuNum, int memSize, int gpuCores, String deadline, long cycles, long requestId) throws IOException, InterruptedException {
         //TODO add scheduling decision here
         ArrayList<String> ipList = new ArrayList<String>();
         int maxCount = 5;
@@ -711,12 +747,6 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
 		    logger.info("machine vmmid=" + vmm1.getVmmid() +" is NOT suitable!");
                     continue;
 		}
-                allSuspended = false;
-                long millionCycles = cycles / 1000000;
-                logger.info("CURRENT ALLOC CPU: " + vmm1.getAllocatedcpu());
-
-                int minExecTime = (int) Math.ceil(( (double) millionCycles / (vmm1.getCpufrequency() *
-                        Double.min((double) vmm1.getCpunums() * ((double) (100 - vmm1.getAllocatedcpu()) / 100), 1) ) ));
 
                 allSuspended = false;
                 long millionCycles = cycles / 1000000;
@@ -755,6 +785,7 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
                 selectedVcpu = 100;
                 selectedMemory = 128;
 
+                DSManager.updateRequestInfoWithVmm(requestId, vmm1.getVmmid());
 
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
 			
@@ -823,13 +854,6 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
             }
         }
 */
-//        if (!allSuspended) {
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setAccepted(0);
-        requestInfo.setUserid(userid);
-        requestInfo.setDeadline(deadline);
-        requestInfo.setCycles(cycles);
-        DSManager.insertRequestInfo(requestInfo);
         return null;
     }
 

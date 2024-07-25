@@ -456,8 +456,19 @@ public class DSManager {
 
     public static RequestInfo getRequestInfo(long requestid) {
     	SqlSession session = sqlMapper.openSession();
-	RequestInfo result = session.selectOne("DS.getRequestInfo", requestid);
+	    RequestInfo result = session.selectOne("DS.getRequestInfo", requestid);
     	session.close();
+        return result;
+    }
+
+    public static int updateRequestInfoWithVmm(long requestid, long vmmId){
+        SqlSession session = sqlMapper.openSession();
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setRequestid(requestid);
+        requestInfo.setVmmid(vmmId);
+        requestInfo.setStatus("ASSIGNED");
+        int result = session.update("DS.updateRequestInfoWithVmm", requestInfo);
+        session.commit();
         return result;
     }
 }

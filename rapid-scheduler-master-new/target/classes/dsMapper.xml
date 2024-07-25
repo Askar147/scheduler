@@ -171,6 +171,12 @@
     	select * from request_info where status = 'PENDING' order by queueStartTime asc limit 1
     </select>
 
+    <update id="updateRequestInfoWithVmm" parameterType="rapid.RequestInfo">
+        update request_info
+        set vmmid = #{vmmid}, status = #{status}
+        where requestid = #{requestid}
+    </update>
+
 
     <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
         insert into wol_history
