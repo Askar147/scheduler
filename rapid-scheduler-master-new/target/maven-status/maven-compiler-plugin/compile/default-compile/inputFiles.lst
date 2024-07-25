@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /home/aailab/Desktop/scheduler (copy)/rapid-scheduler-master-new/src/main/java/rapid/DSEngine.java
 /home/aailab/Desktop/scheduler (copy)/rapid-scheduler-master-new/src/main/java/rapid/MainScheduler.java
 /home/aailab/Desktop/scheduler (copy)/rapid-scheduler-master-new/src/main/java/rapid/VmType.java
@@ -13,3 +14,20 @@
 /home/aailab/Desktop/scheduler (copy)/rapid-scheduler-master-new/src/main/java/rapid/OffloadHistory.java
 /home/aailab/Desktop/scheduler (copy)/rapid-scheduler-master-new/src/main/java/rapid/DSManager.java
 /home/aailab/Desktop/scheduler (copy)/rapid-scheduler-master-new/src/main/java/rapid/WorkerRunnable.java
+=======
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/MainScheduler.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/VmmInfo.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/VmmStats.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/UserInfo.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/WorkerRunnable.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/DSEngine.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/VmType.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/DSManager.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/ThreadPooledServer.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/SlamInfo.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/OffloadHistory.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/VmInfo.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/WolHistory.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/GlobalReadings.java
+/home/aailab/Desktop/scheduler/rapid-scheduler-master-new/src/main/java/rapid/RequestInfo.java
+>>>>>>> a2523a97b96b58e9ad87529332821b723492ef91

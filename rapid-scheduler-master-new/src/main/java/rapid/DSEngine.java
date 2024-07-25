@@ -10,9 +10,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Random;
+<<<<<<< HEAD
 import java.sql.Timestamp;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+=======
+>>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
 
 public class DSEngine {
     private static DSEngine dsEngine = new DSEngine();
@@ -21,7 +24,10 @@ public class DSEngine {
     private final static Map<Long, Float> allocatedCpu = Collections.synchronizedMap(new HashMap<Long, Float>());
 
 //    private final HashMap<Long, Float> lastAllocatedCpu = new HashMap<Long, Float>();
+<<<<<<< HEAD
     private static BlockingQueue<RequestInfo> requestQueue = new LinkedBlockingQueue<>();
+=======
+>>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
 
     private DSEngine() { }
 
@@ -222,7 +228,6 @@ public class DSEngine {
 	    String clientIp = socket.getInetAddress().getHostAddress();
 	    int clientPort = socket.getPort();
 
-
             logger.info("AC_REGISTER_NEW_DS, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
                     + " gpuCores: " + gpuCores + " deadline: " + deadline + " cycles: " + cycles);
 
@@ -254,6 +259,7 @@ public class DSEngine {
 		 requestQueue.add(requestInfo);
 		 out.writeInt(RapidMessages.PING);
 	    }
+            }
 
             if (userid > 0) {
                 VmInfo vmInfo = DSManager.getVmInfoByUserid(userid);
@@ -377,7 +383,6 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
         e.printStackTrace();
     }
 }
-
 
 
 
@@ -700,7 +705,6 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
         int selectedVcpu;
         int selectedMemory;
         int minvcpu = 40;
-
 	
 
       for (VmmInfo vmmInfo: vmmInfoList) {
@@ -713,7 +717,6 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
 		    logger.info("machine vmmid=" + vmm1.getVmmid() +" is NOT suitable!");
                     continue;
 		}
-
                 allSuspended = false;
                 long millionCycles = cycles / 1000000;
                 logger.info("CURRENT ALLOC CPU: " + vmm1.getAllocatedcpu());
@@ -721,6 +724,11 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
                 int minExecTime = (int) Math.ceil(( (double) millionCycles / (vmm1.getCpufrequency() *
                         Double.min((double) vmm1.getCpunums() * ((double) (100 - vmm1.getAllocatedcpu()) / 100), 1) ) ));
 
+                allSuspended = false;
+                long millionCycles = cycles / 1000000;
+                logger.info("CURRENT ALLOC CPU: " + vmm1.getAllocatedcpu());
+                int minExecTime = (int) Math.ceil(( (double) millionCycles / (vmm1.getCpufrequency() *
+                        Double.min((double) vmm1.getCpunums() * ((double) (100 - vmm1.getAllocatedcpu()) / 100), 1) ) ));
                 logger.info("DECIDING vmmid: " + vmm1.getVmmid());
                 logger.info("minExecTime: " + minExecTime);
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -739,24 +747,21 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
                 vcpu = Integer.max(vcpu, minvcpu);
                 logger.info("vcpu: " + vcpu);
 
+                //UserInfo userInfo = DSManager.getUserInfo(userid);
+                //userInfo.setVcpu(vcpu);
+                //userInfo.setMemory(128);
+                //DSManager.updateUserInfo(userInfo);
+
+                //ipList.add(vmmInfo.getIpv4());
+                //vmmConfig.setVmmIP(vmmInfo.getIpv4());
+                //vmmConfig.setVcpu(vcpu);
+                //vmmConfig.setMemory(128);
                 selectedVmmIp = vmm1.getIpv4();
                 selectedVcpu = vcpu;
                 selectedVcpu = 100;
                 selectedMemory = 128;
 
-                RequestInfo requestInfo = new RequestInfo();
-                requestInfo.setAccepted(1);
-                requestInfo.setVmmid(vmm1.getVmmid());
-                requestInfo.setUserid(userid);
-                requestInfo.setDeadline(deadline);
-                requestInfo.setVcpu(selectedVcpu);
-                requestInfo.setMemory(selectedMemory);
-                requestInfo.setCycles(cycles);
-		requestInfo.setQueueStartTime(new Timestamp(System.currentTimeMillis()).toString());
-		
-		requestInfo.setStatus("PENDING");
- 		
-                DSManager.insertRequestInfo(requestInfo);
+
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
 			
 		}
@@ -764,10 +769,9 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
 
 
 
-
-
 logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
 /*        for (VmmInfo vmmInfo: vmmInfoList) {
+        for (VmmInfo vmmInfo: vmmInfoList) {
             if (vmmInfo.getSuspended() == 0) {
 		//TODO:PYTHON CONNECT
 
@@ -797,8 +801,19 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
                 int vcpu = (int) Math.ceil(Double.min(( (double)requiredCpuFrequency / vmmInfo.getCpufrequency()) * 100, 100));
                 vcpu = Integer.max(vcpu, minvcpu);
                 logger.info("vcpu: " + vcpu);
-;
                 selectedVcpu = vcpu;
+//                UserInfo userInfo = DSManager.getUserInfo(userid);
+//                userInfo.setVcpu(vcpu);
+//                userInfo.setMemory(128);
+//                DSManager.updateUserInfo(userInfo);
+
+//                ipList.add(vmmInfo.getIpv4());
+//                vmmConfig.setVmmIP(vmmInfo.getIpv4());
+//                vmmConfig.setVcpu(vcpu);
+//                vmmConfig.setMemory(128);
+                selectedVmmIp = vmmInfo.getIpv4();
+                selectedVcpu = vcpu;
+//                selectedVcpu = 100;
                 selectedMemory = 128;
 
                 RequestInfo requestInfo = new RequestInfo();

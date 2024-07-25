@@ -446,7 +446,6 @@ public class DSManager {
         session.close();
         return result;
     }
-
     public static int updateRequestInfo(RequestInfo requestInfo) {
     	SqlSession session = sqlMapper.openSession();
         int result = session.update("DS.updateRequestInfo", requestInfo);
