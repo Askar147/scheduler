@@ -219,8 +219,8 @@ public class DSEngine {
             int gpuCores = in.readInt();
             String deadline = in.readUTF();
             long cycles = in.readLong();
-	    String clientIp = socket.getInetAddress().getHostAddress();
-	    int clientPort = socket.getPort();
+            String clientIp = socket.getInetAddress().getHostAddress();
+            int clientPort = socket.getPort();
 
             logger.info("AC_REGISTER_NEW_DS, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
                     + " gpuCores: " + gpuCores + " deadline: " + deadline + " cycles: " + cycles);
@@ -233,10 +233,10 @@ public class DSEngine {
             requestInfo.setCycles(cycles);
             requestInfo.setUserid(userid);
             requestInfo.setDeadline(deadline);
-	    requestInfo.setClientIp(clientIp);
+            requestInfo.setClientIp(clientIp);
             requestInfo.setClientPort(clientPort);
-	    requestInfo.setQueueStartTime(new Timestamp(System.currentTimeMillis()).toString());
-	    requestInfo.setStatus("PENDING");
+            requestInfo.setQueueStartTime(new Timestamp(System.currentTimeMillis()).toString());
+            requestInfo.setStatus("PENDING");
 	
             DSManager.insertRequestInfo(requestInfo);
 
@@ -248,11 +248,10 @@ public class DSEngine {
                 ipList.add(vmmConfig.getVmmIP());
                 incrementAllocatedcpu(vmmConfig);
             }else {
-	    
-		// Queue the request
-		 requestQueue.add(requestInfo);
-		 out.writeInt(RapidMessages.PING);
-	    }
+                // Queue the request
+                requestQueue.add(requestInfo);
+                out.writeInt(RapidMessages.PING);
+	        }
             
 
             if (userid > 0) {
