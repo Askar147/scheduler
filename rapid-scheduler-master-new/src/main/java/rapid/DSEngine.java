@@ -10,12 +10,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Random;
-<<<<<<< HEAD
 import java.sql.Timestamp;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-=======
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
 
 public class DSEngine {
     private static DSEngine dsEngine = new DSEngine();
@@ -24,10 +21,7 @@ public class DSEngine {
     private final static Map<Long, Float> allocatedCpu = Collections.synchronizedMap(new HashMap<Long, Float>());
 
 //    private final HashMap<Long, Float> lastAllocatedCpu = new HashMap<Long, Float>();
-<<<<<<< HEAD
     private static BlockingQueue<RequestInfo> requestQueue = new LinkedBlockingQueue<>();
-=======
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
 
     private DSEngine() { }
 

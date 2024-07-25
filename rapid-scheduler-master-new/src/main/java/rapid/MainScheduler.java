@@ -45,11 +45,7 @@ public class MainScheduler {
     public static void main(String[] args) throws IOException {
 
         MainScheduler mainScheduler = MainScheduler.getInstance();
-<<<<<<< HEAD
-
-=======
 /*
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
         //start suspendIdleVmms Timer
 	mainScheduler.getLogger().info("BEFORE CREATING ADJUSTIDLE VMMS"); 
         AdjustIdleVmms adjustIdleVmms = new AdjustIdleVmms();
@@ -57,11 +53,7 @@ public class MainScheduler {
 //        // TODO: RETURN AUTO SLEEP
         suspendVmmsTimer.schedule(adjustIdleVmms, 30000, 2000);
 	mainScheduler.getLogger().info("AFTER CREATING ADJUSTIDLE VMMS"); 
-<<<<<<< HEAD
-
-=======
 */
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
         CalculateAverageAllocatedCpu calculateAverageAllocatedCpu = new CalculateAverageAllocatedCpu();
         Timer queryAllocatedCpuTimer = new Timer();
         queryAllocatedCpuTimer.schedule(calculateAverageAllocatedCpu, 15000, 5000);
@@ -193,11 +185,7 @@ class CalculateAverageAllocatedCpu extends TimerTask {
         globalReadings.setPowerusageavg(averagePowerUsage);
         DSManager.insertGlobalReading(globalReadings);
 
-<<<<<<< HEAD
-        logger.info("Inserted current global readings into the database.");
-=======
         logger.info("Inserted current global readings into the database.AND SEQUENTIONAL");
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
         if (count != 0)
             logger.info("Predicted workload in the next minute - " + DSManager.predictWorkload());
         count++;
@@ -208,11 +196,7 @@ class AdjustIdleVmms extends TimerTask {
     private Logger logger = Logger.getLogger(getClass());
 
     public void run() {
-<<<<<<< HEAD
-	logger.info("ADJUSTIDLEVMMS DOES WORK WITH XAVIER ");
-=======
 	logger.info("ADJUSTIDLEVMMS DOES WORK WITH XAVIER AND SEQUENTIONAL");
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
         List<VmmInfo> vmmInfoList = DSManager.vmmInfoList();
         int activeVmms = 0;
         float totalAllocatedCpu = 0;
