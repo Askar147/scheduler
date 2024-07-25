@@ -253,7 +253,7 @@ public class DSEngine {
 		 requestQueue.add(requestInfo);
 		 out.writeInt(RapidMessages.PING);
 	    }
-            }
+            
 
             if (userid > 0) {
                 VmInfo vmInfo = DSManager.getVmInfoByUserid(userid);

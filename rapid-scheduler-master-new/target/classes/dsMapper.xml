@@ -150,22 +150,15 @@
 
     <insert id="insertRequestInfo" parameterType="rapid.RequestInfo" useGeneratedKeys="true" keyProperty="requestid" keyColumn="requestid">
         insert into request_info
-<<<<<<< HEAD
         (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp, queueStartTime, queueEndTime, status, clientIp, clientPort)
         values
         (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now(), #{queueStartTime}, #{queueEndTime}, #{status}, #{clientIp}, #{clientPort})
-=======
-        (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp)
-        values
-        (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now())
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
 
         <selectKey keyProperty="requestid" resultType="long" order="AFTER">
             select LAST_INSERT_ID();
         </selectKey>
     </insert>
 
-<<<<<<< HEAD
     <update id="updateRequestInfo" parameterType="rapid.RequestInfo">
 	update request_info set accepted = #{accepted}, vmmid = #{vmmid}, userid = #{userid}, deadline = TIMESTAMP(#{deadline}), vcpu = #{vcpu}, 		memory = #{memory}, cycles = #{cycles}, timestamp = #{timestamp}, queueStartTime = #{queueStartTime}, status = #{status}, clientIp = 		#{clientIp}, clientPort = #{clientPort} where requestid = #{requestid}
     </update>
@@ -179,8 +172,6 @@
     </select>
 
 
-=======
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
     <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
         insert into wol_history
         (vmmid, iswol, timestamp)
@@ -231,8 +222,4 @@
             (DATE_ADD(NOW(), INTERVAL 2 MINUTE) * (SELECT slope FROM trend_line) + (SELECT intercept FROM trend_line)) AS prediction
         FROM globalreadings LIMIT 1;
     </select>
-<<<<<<< HEAD
 </mapper>
-=======
-</mapper>
->>>>>>> a2523a97b96b58e9ad87529332821b723492ef91
