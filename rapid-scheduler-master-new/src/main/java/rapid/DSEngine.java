@@ -10,6 +10,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Random;
+import java.sql.Timestamp;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class DSEngine {
     private static DSEngine dsEngine = new DSEngine();
@@ -18,6 +21,7 @@ public class DSEngine {
     private final static Map<Long, Float> allocatedCpu = Collections.synchronizedMap(new HashMap<Long, Float>());
 
 //    private final HashMap<Long, Float> lastAllocatedCpu = new HashMap<Long, Float>();
+    private static BlockingQueue<RequestInfo> requestQueue = new LinkedBlockingQueue<>();
 
     private DSEngine() { }
 
@@ -215,11 +219,27 @@ public class DSEngine {
             int gpuCores = in.readInt();
             String deadline = in.readUTF();
             long cycles = in.readLong();
-//            String deadline = "2022-08-05 18:19:03";
-//            int cycles=1;
+	    String clientIp = socket.getInetAddress().getHostAddress();
+	    int clientPort = socket.getPort();
+
 
             logger.info("AC_REGISTER_NEW_DS, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
                     + " gpuCores: " + gpuCores + " deadline: " + deadline + " cycles: " + cycles);
+
+
+            RequestInfo requestInfo = new RequestInfo();
+            requestInfo.setAccepted(0);
+            requestInfo.setVcpu(vcpuNum);
+            requestInfo.setMemory(memSize);
+            requestInfo.setCycles(cycles);
+            requestInfo.setUserid(userid);
+            requestInfo.setDeadline(deadline);
+	    requestInfo.setClientIp(clientIp);
+            requestInfo.setClientPort(clientPort);
+	    requestInfo.setQueueStartTime(new Timestamp(System.currentTimeMillis()).toString());
+	    requestInfo.setStatus("PENDING");
+	
+            DSManager.insertRequestInfo(requestInfo);
 
 	    logger.info("Beofore Calling THE METHOD FINDVAILMAHCINES");
             VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles);
@@ -228,7 +248,12 @@ public class DSEngine {
             if (vmmConfig != null) {
                 ipList.add(vmmConfig.getVmmIP());
                 incrementAllocatedcpu(vmmConfig);
-            }
+            }else {
+	    
+		// Queue the request
+		 requestQueue.add(requestInfo);
+		 out.writeInt(RapidMessages.PING);
+	    }
 
             if (userid > 0) {
                 VmInfo vmInfo = DSManager.getVmInfoByUserid(userid);
@@ -309,6 +334,52 @@ public class DSEngine {
             e.printStackTrace();
         }
     }
+
+
+private void processQueue() {
+    while (true) {
+        RequestInfo requestInfo = requestQueue.poll();
+        if (requestInfo != null) {
+            VmmConfig vmmConfig = findAvailMachines(
+                requestInfo.getUserid(),
+                requestInfo.getVcpu(),
+                (int) requestInfo.getMemory(),
+                0, // Assuming gpuCores is 0
+                requestInfo.getDeadline(),
+                requestInfo.getCycles()
+            );
+            if (vmmConfig != null) {
+                DSManager.updateRequestInfoWithVmm(requestInfo.getRequestid(), vmmConfig);
+                notifyClient(requestInfo, vmmConfig);
+            } else {
+                // Requeue the request if no available machines found
+                requestQueue.add(requestInfo);
+            }
+        }
+        // Sleep or wait before processing the next item
+        try {
+            Thread.sleep(1000); // Adjust as needed
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
+    try (Socket clientSocket = new Socket(requestInfo.getClientIp(), requestInfo.getClientPort());
+         ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream())) {
+        out.writeInt(RapidMessages.OK);
+        out.writeLong(requestInfo.getRequestid());
+        out.writeUTF(vmmConfig.getVmmIP());
+        out.writeInt(vmmConfig.getVmmPort());
+        out.flush();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+
+
 
     /**
      * The function deals with the AC_REGISTER_PREV_DS message. It receives the
@@ -630,30 +701,6 @@ public class DSEngine {
         int selectedMemory;
         int minvcpu = 40;
 
-//	Vector<int> cpuload = new Vector<int>();
-//	Vector<int> cpufrequency= new Vector<int>();
-//	Vector<long> freemem = new Vector<long>();
-//	Vector<long> availmem = new Vector<long>();
-//	Vector<int> powerusage = new Vector<int>();
-//	Vector<int> allocatedcpu = new Vector<int>();
-//	int inf = 2148454455
-//       
-//
-//
-//	
-//	
-//	for (VmmInfo vmmInfo: vmmInfoList){
-//	
-//		cpuload.add(vmmInfo.getCpuload());
-//		cpufrequency.add(vmmInfo.getCpufrequency());
-//		freemem.add(vmmInfo.getFreemem());
-//		availmem.add(vmmInfo.getAvailmem());
-//		powerusage.add(vmmInfo.getPowerusage());
-//		allocatedcpu.add(vmmInfo.getAllocatedcpu());}
-//	}
-
-//TODO node_id = Model(cpuload,cpufrequency,freemem,availmem,powerusage,allocatedcpu);
-
 	
 
       for (VmmInfo vmmInfo: vmmInfoList) {
@@ -666,11 +713,14 @@ public class DSEngine {
 		    logger.info("machine vmmid=" + vmm1.getVmmid() +" is NOT suitable!");
                     continue;
 		}
+
                 allSuspended = false;
                 long millionCycles = cycles / 1000000;
                 logger.info("CURRENT ALLOC CPU: " + vmm1.getAllocatedcpu());
+
                 int minExecTime = (int) Math.ceil(( (double) millionCycles / (vmm1.getCpufrequency() *
                         Double.min((double) vmm1.getCpunums() * ((double) (100 - vmm1.getAllocatedcpu()) / 100), 1) ) ));
+
                 logger.info("DECIDING vmmid: " + vmm1.getVmmid());
                 logger.info("minExecTime: " + minExecTime);
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -689,15 +739,6 @@ public class DSEngine {
                 vcpu = Integer.max(vcpu, minvcpu);
                 logger.info("vcpu: " + vcpu);
 
-                //UserInfo userInfo = DSManager.getUserInfo(userid);
-                //userInfo.setVcpu(vcpu);
-                //userInfo.setMemory(128);
-                //DSManager.updateUserInfo(userInfo);
-
-                //ipList.add(vmmInfo.getIpv4());
-                //vmmConfig.setVmmIP(vmmInfo.getIpv4());
-                //vmmConfig.setVcpu(vcpu);
-                //vmmConfig.setMemory(128);
                 selectedVmmIp = vmm1.getIpv4();
                 selectedVcpu = vcpu;
                 selectedVcpu = 100;
@@ -711,6 +752,10 @@ public class DSEngine {
                 requestInfo.setVcpu(selectedVcpu);
                 requestInfo.setMemory(selectedMemory);
                 requestInfo.setCycles(cycles);
+		requestInfo.setQueueStartTime(new Timestamp(System.currentTimeMillis()).toString());
+		
+		requestInfo.setStatus("PENDING");
+ 		
                 DSManager.insertRequestInfo(requestInfo);
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
 			
@@ -722,7 +767,7 @@ public class DSEngine {
 
 
 logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
-        for (VmmInfo vmmInfo: vmmInfoList) {
+/*        for (VmmInfo vmmInfo: vmmInfoList) {
             if (vmmInfo.getSuspended() == 0) {
 		//TODO:PYTHON CONNECT
 
@@ -752,19 +797,8 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
                 int vcpu = (int) Math.ceil(Double.min(( (double)requiredCpuFrequency / vmmInfo.getCpufrequency()) * 100, 100));
                 vcpu = Integer.max(vcpu, minvcpu);
                 logger.info("vcpu: " + vcpu);
-
-//                UserInfo userInfo = DSManager.getUserInfo(userid);
-//                userInfo.setVcpu(vcpu);
-//                userInfo.setMemory(128);
-//                DSManager.updateUserInfo(userInfo);
-
-//                ipList.add(vmmInfo.getIpv4());
-//                vmmConfig.setVmmIP(vmmInfo.getIpv4());
-//                vmmConfig.setVcpu(vcpu);
-//                vmmConfig.setMemory(128);
-                selectedVmmIp = vmmInfo.getIpv4();
+;
                 selectedVcpu = vcpu;
-//                selectedVcpu = 100;
                 selectedMemory = 128;
 
                 RequestInfo requestInfo = new RequestInfo();
@@ -779,7 +813,7 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
             }
         }
-
+*/
 //        if (!allSuspended) {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setAccepted(0);
@@ -788,69 +822,6 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
         requestInfo.setCycles(cycles);
         DSManager.insertRequestInfo(requestInfo);
         return null;
-//        }
-//        else {
-//            for (VmmInfo vmmInfo: vmmInfoList) {
-//                if (vmmInfo.getSuspended() == 1) {
-////                    runWithPrivileges("etherwake -i eno1 " + vmmInfo.getMacaddress());
-////                    runWithPrivileges(vmmInfo.getMacaddress());
-////                    for (int i = 0; i < 10; i++) {
-////                        wakeOnLan("192.168.1.255", vmmInfo.getMacaddress());
-////                    }
-//                    Socket wakeOnLanSocket = new Socket(MainScheduler.getInstance().getIpv4(), 9876);
-//                    ObjectOutputStream dsOut = new ObjectOutputStream(wakeOnLanSocket.getOutputStream());
-//                    dsOut.flush();
-//
-//                    dsOut.writeByte(1);
-//
-//                    dsOut.writeUTF(vmmInfo.getMacaddress());
-//                    dsOut.flush();
-//
-//                    dsOut.close();
-//                    wakeOnLanSocket.close();
-//                    logger.info(vmmInfo.getMacaddress());
-//                    break;
-//                }
-//            }
-//            Thread.sleep(2000);
-//            return findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles);
-//        }
-//        Iterator<VmmInfo> vmmInfoListIterator = vmmInfoList.iterator();
-
-//        while (vmmInfoListIterator.hasNext()) {
-//            VmmInfo vmmInfo = vmmInfoListIterator.next();
-//
-//            // CPU utilization check
-//            float desiredCpuUtilization = ((float) vcpuNum / (float) vmmInfo.getCpunums()) * 100;
-//            if ((int) desiredCpuUtilization > (100 - vmmInfo.getCpuload()))
-//                continue;
-//
-//            // memory amount check. Temporarily commented because
-//            // osBean.getFreePhysicalMemorySize() does not work well after the
-//            // kernel version 3.2.
-//
-//            System.out.println("findAvailMachines reqeusted memSize is="+memSize+",  vmm freemem is="+vmmInfo.getFreemem()+" availmem="+vmmInfo.getAvailmem());
-//            //if ((memSize / 1024) > vmmInfo.getFreemem()) continue;
-//
-//
-//            // GPU utilization check
-//            boolean gpuSuccess = true;
-//
-//            if (gpuCores != 0) {
-//                float desiredGpuUtilization = ((float) gpuCores / (float) vmmInfo.getGpunums()) * 100;
-//                if ((int) desiredGpuUtilization > (100 - vmmInfo.getFreegpu()))
-//                    gpuSuccess = false;
-//            }
-//
-//            if (gpuSuccess == false)
-//                continue;
-//
-//            ipList.add(vmmInfo.getIpv4());
-//            maxCount--;
-//
-//            if (maxCount == 0)
-//                return ipList;
-//        }
     }
 
     public void suspendVmm(long vmmid) {

@@ -446,4 +446,19 @@ public class DSManager {
         session.close();
         return result;
     }
+
+    public static int updateRequestInfo(RequestInfo requestInfo) {
+    	SqlSession session = sqlMapper.openSession();
+        int result = session.update("DS.updateRequestInfo", requestInfo);
+        session.commit();
+        session.close();
+        return result;
+    }
+
+    public static RequestInfo getRequestInfo(long requestid) {
+    	SqlSession session = sqlMapper.openSession();
+	RequestInfo result = session.selectOne("DS.getRequestInfo", requestid);
+    	session.close();
+        return result;
+    }
 }

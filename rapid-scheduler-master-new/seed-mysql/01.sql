@@ -147,6 +147,11 @@ CREATE TABLE `request_info` (
    `memory` int(11) NOT NULL,
    `cycles` bigint(11) NOT NULL,
    `timestamp` timestamp NULL DEFAULT NULL,
+   `queueStartTime` timestamp NULL DEFAULT NULL,
+   `queueEndTime` timestamp NULL DEFAULT NULL,
+   `status` varchar(10) DEFAULT 'PENDING',
+   `clientIp` varchar(15) DEFAULT NULL,
+   `clientPort` int(11) DEFAULT NULL,
    PRIMARY KEY (`requestid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 

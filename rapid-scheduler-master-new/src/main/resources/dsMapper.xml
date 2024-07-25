@@ -150,14 +150,27 @@
 
     <insert id="insertRequestInfo" parameterType="rapid.RequestInfo" useGeneratedKeys="true" keyProperty="requestid" keyColumn="requestid">
         insert into request_info
-        (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp)
+        (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp, queueStartTime, queueEndTime, status, clientIp, clientPort)
         values
-        (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now())
+        (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now(), #{queueStartTime}, #{queueEndTime}, #{status}, #{clientIp}, #{clientPort})
 
         <selectKey keyProperty="requestid" resultType="long" order="AFTER">
             select LAST_INSERT_ID();
         </selectKey>
     </insert>
+
+    <update id="updateRequestInfo" parameterType="rapid.RequestInfo">
+	update request_info set accepted = #{accepted}, vmmid = #{vmmid}, userid = #{userid}, deadline = TIMESTAMP(#{deadline}), vcpu = #{vcpu}, 		memory = #{memory}, cycles = #{cycles}, timestamp = #{timestamp}, queueStartTime = #{queueStartTime}, status = #{status}, clientIp = 		#{clientIp}, clientPort = #{clientPort} where requestid = #{requestid}
+    </update>
+
+    <select id="getRequestInfo" parameterType="long" resultType="rapid.RequestInfo">
+    	select * from request_info where requestid = #{requestid}
+    </select>
+
+    <select id="getNextPendingRequest" resultType="rapid.RequestInfo">
+    	select * from request_info where status = 'PENDING' order by queueStartTime asc limit 1
+    </select>
+
 
     <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
         insert into wol_history

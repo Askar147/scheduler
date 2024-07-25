@@ -10,6 +10,11 @@ public class RequestInfo {
     private int vcpu;
     private long memory;
     private long cycles;
+    private String queueStartTime;
+    private String queueEndTime;
+    private String status;
+    private String clientIp; 
+    private int clientPort;  
 
     public long getRequestid() {
         return requestid;
@@ -73,5 +78,45 @@ public class RequestInfo {
 
     public void setAccepted(int accepted) {
         this.accepted = accepted;
+    }
+
+    public String getQueueStartTime() {
+    	return queueStartTime;
+    }
+
+    public void setQueueStartTime(String queueStartTime) {
+    	this.queueStartTime = queueStartTime;
+    }
+
+    public String getQueueEndTime() {
+    	return queueEndTime;
+    }
+
+    public void setQueueEndTime(String queueEndTime) {
+    	this.queueEndTime = queueEndTime;
+    }
+
+    public String getStatus() {
+    	return status;
+    }
+
+    public void setStatus(String status) {
+    	this.status = status;
+    }
+
+    public String getClientIp() {
+        return clientIp;
+    }
+
+    public void setClientIp(String clientIp) {
+        this.clientIp = clientIp;
+    }
+
+    public int getClientPort() {
+        return clientPort;
+    }
+
+    public void setClientPort(int clientPort) {
+        this.clientPort = clientPort;
     }
 }
