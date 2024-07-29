@@ -251,6 +251,7 @@ public class DSEngine {
                 // Queue the request
                 requestQueue.add(requestInfo);
                 out.writeInt(RapidMessages.PING);
+                logger.info("Current Size of The QUEUE: " + requestQueue.size());
 	        }
             
 
@@ -336,8 +337,11 @@ public class DSEngine {
 
 
 private void processQueue() {
+    int queueSize = requestQueue.size();
+    int i = 0;
     try{
-        while (!requestQueue.isEmpty()) {
+        while (!requestQueue.isEmpty() || i < queueSize) {
+            i++;
             RequestInfo requestInfo = requestQueue.poll();
             if (requestInfo != null) {
                 VmmConfig vmmConfig = findAvailMachines(
