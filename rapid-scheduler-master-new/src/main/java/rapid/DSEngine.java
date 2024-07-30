@@ -222,7 +222,7 @@ public class DSEngine {
             String clientIp = socket.getInetAddress().getHostAddress();
             int clientPort = socket.getPort();
 
-            logger.info("AC_REGISTER_NEW_DS, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
+            logger.info("AC_REGISTER_NEW_DS AAAAAAAAAAAAA, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
                     + " gpuCores: " + gpuCores + " deadline: " + deadline + " cycles: " + cycles);
 
 
@@ -251,6 +251,7 @@ public class DSEngine {
                 // Queue the request
                 requestQueue.add(requestInfo);
                 out.writeByte(RapidMessages.PING);
+                out.flush();
                 logger.info("Current Size of The QUEUE: " + requestQueue.size());
                 return;
 	        }
