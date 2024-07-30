@@ -406,7 +406,7 @@ private void notifyClient(RequestInfo requestInfo, VmmConfig vmmConfig) {
         }
 
 
-        out.writeInt(RapidMessages.OK);
+        out.writeByte(RapidMessages.OK);
         out.writeLong(newUserid);
         out.writeObject(ipList);
         out.writeUTF(scheduler.getIpv4());
