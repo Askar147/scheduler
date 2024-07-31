@@ -252,6 +252,7 @@ public class DSEngine {
                 requestQueue.add(requestInfo);
                 out.writeByte(RapidMessages.PING);
                 out.flush();
+                out.writeInt(clientPort);
                 logger.info("Current Size of The QUEUE: " + requestQueue.size());
                 return;
 	        }
