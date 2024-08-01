@@ -6,7 +6,6 @@ services:
       context: .
     ports:
       - "9001:9001"
-      - "30152-65535:30152-65535"
     depends_on:
       - db
     env_file:
@@ -37,3 +36,5 @@ services:
 networks:
   ds-network:
     name: ds-network
+  rapid-ac-network:
+    external: true
