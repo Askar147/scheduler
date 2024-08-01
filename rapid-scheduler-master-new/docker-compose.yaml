@@ -4,9 +4,9 @@ services:
   scheduler:
     build:
       context: .
-    #ports:
-    #  - "9001:9001"
-    network_mode: host
+    ports:
+      - "9001:9001"
+      - "30152-65535:30152-65535"
     depends_on:
       - db
     env_file:
