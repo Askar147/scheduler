@@ -15,6 +15,7 @@ services:
       SCHEDULER_IP: ${SCHEDULER_IP}
     networks:
       - ds-network
+      - rapid-ac-network
   db:
     image: mysql
     restart: always
