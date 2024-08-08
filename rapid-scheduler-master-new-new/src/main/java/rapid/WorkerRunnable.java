@@ -104,8 +104,9 @@ public class WorkerRunnable implements Runnable {
             e.printStackTrace();
         }
 
-        public static BlockingQueue<Socket> getRequestQueue() {
-            return requestQueue;
-        }
+    }
+
+    public static BlockingQueue<Socket> getRequestQueue() {
+        return requestQueue;
     }
 }
