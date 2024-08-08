@@ -19,6 +19,13 @@ public class WorkerRunnable implements Runnable {
     public WorkerRunnable(Socket clientSocket, String serverText) {
         this.clientSocket = clientSocket;
         this.serverText = serverText;
+
+        try {
+            // Enable TCP keep-alive
+            this.clientSocket.setKeepAlive(true);
+        } catch (IOException e) {
+            logger.error("Error enabling keep-alive on socket", e);
+        }
     }
 
     public void run() {
