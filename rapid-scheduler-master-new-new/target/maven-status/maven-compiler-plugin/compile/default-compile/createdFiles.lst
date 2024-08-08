@@ -1,6 +1,7 @@
 rapid/VmmStats.class
 rapid/MainScheduler.class
 rapid/ThreadPooledServer.class
+rapid/QueueProcessor.class
 rapid/GlobalReadings.class
 rapid/DSEngine.class
 rapid/VmInfo.class
