@@ -261,7 +261,7 @@ class AdjustIdleVmms extends TimerTask {
 
 
 }
-public class QueueProcessor implements Runnable {
+class QueueProcessor implements Runnable {
     private static Logger logger = Logger.getLogger(QueueProcessor.class);
     private BlockingQueue<Socket> requestQueue;
 

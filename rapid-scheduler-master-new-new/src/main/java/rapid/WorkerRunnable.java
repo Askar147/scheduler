@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.log4j.Logger;
 import eu.project.rapid.common.RapidMessages;
 
