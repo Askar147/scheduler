@@ -12,6 +12,8 @@ public class WorkerRunnable implements Runnable {
     protected String serverText = null;
     private Logger logger = Logger.getLogger(getClass());
 
+    private static BlockingQueue<Socket> requestQueue = new LinkedBlockingQueue<>();
+
     public WorkerRunnable(Socket clientSocket, String serverText) {
         this.clientSocket = clientSocket;
         this.serverText = serverText;
@@ -37,7 +39,9 @@ public class WorkerRunnable implements Runnable {
                     dsEngine.vmmNotifyDs(in, out);
                     break;
                 case RapidMessages.AC_REGISTER_NEW_DS:
-                    dsEngine.acRegisterNewDs(in, out, clientSocket);
+                    //dsEngine.acRegisterNewDs(in, out, clientSocket);
+                    // Add the socket to the queue
+                    requestQueue.add(clientSocket);
                     break;
                 case RapidMessages.AC_REGISTER_PREV_DS:
                     dsEngine.acRegisterPrevDs(in, out, clientSocket);
@@ -85,7 +89,10 @@ public class WorkerRunnable implements Runnable {
             if (command != RapidMessages.FORWARD_REQ && command != RapidMessages.PARALLEL_REQ) {
                 in.close();
                 out.close();
-                clientSocket.close();
+                // We do not close the clientSocket here to keep it in the queue
+                if (command != RapidMessages.AC_REGISTER_NEW_DS) {
+                    clientSocket.close();
+                }
             }
 
         } catch (IOException e) {
@@ -95,6 +102,10 @@ public class WorkerRunnable implements Runnable {
             }
             logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
             e.printStackTrace();
+        }
+
+        public static BlockingQueue<Socket> getRequestQueue() {
+            return requestQueue;
         }
     }
 }
