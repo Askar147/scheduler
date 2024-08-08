@@ -259,45 +259,46 @@ class AdjustIdleVmms extends TimerTask {
         }
     }
 
-    public class QueueProcessor implements Runnable {
-        private static Logger logger = Logger.getLogger(QueueProcessor.class);
-        private BlockingQueue<Socket> requestQueue;
-    
-        public QueueProcessor(BlockingQueue<Socket> requestQueue) {
-            this.requestQueue = requestQueue;
-        }
-    
-        public void run() {
-            while (true) {
-                try {
-                    Socket socket = requestQueue.take(); // Blocking call
-                    processRequest(socket);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    logger.error("QueueProcessor interrupted", e);
-                    break;
-                }
+
+}
+public class QueueProcessor implements Runnable {
+    private static Logger logger = Logger.getLogger(QueueProcessor.class);
+    private BlockingQueue<Socket> requestQueue;
+
+    public QueueProcessor(BlockingQueue<Socket> requestQueue) {
+        this.requestQueue = requestQueue;
+    }
+
+    public void run() {
+        while (true) {
+            try {
+                Socket socket = requestQueue.take(); // Blocking call
+                processRequest(socket);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.error("QueueProcessor interrupted", e);
+                break;
             }
         }
-    
-        private void processRequest(Socket socket) {
-            try (ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-    
-                DSEngine dsEngine = DSEngine.getInstance();
-                dsEngine.acRegisterNewDs(in, out, socket);
-                
-                in.close();
-                out.close();
-                socket.close();
-            } catch (IOException e) {
-                String message = "";
-                for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
-                    message = message + System.lineSeparator() + stackTraceElement.toString();
-                }
-                logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
-                e.printStackTrace();
+    }
+
+    private void processRequest(Socket socket) {
+        try (ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
+
+            DSEngine dsEngine = DSEngine.getInstance();
+            dsEngine.acRegisterNewDs(in, out, socket);
+            
+            in.close();
+            out.close();
+            socket.close();
+        } catch (IOException e) {
+            String message = "";
+            for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+                message = message + System.lineSeparator() + stackTraceElement.toString();
             }
+            logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
+            e.printStackTrace();
         }
     }
 }
