@@ -263,17 +263,17 @@ class AdjustIdleVmms extends TimerTask {
 }
 class QueueProcessor implements Runnable {
     private static Logger logger = Logger.getLogger(QueueProcessor.class);
-    private BlockingQueue<Socket> requestQueue;
+    private BlockingQueue<Connection> requestQueue;
 
-    public QueueProcessor(BlockingQueue<Socket> requestQueue) {
+    public QueueProcessor(BlockingQueue<Connection> requestQueue) {
         this.requestQueue = requestQueue;
     }
 
     public void run() {
         while (true) {
             try {
-                Socket socket = requestQueue.take(); // Blocking call
-                processRequest(socket);
+                Connection connection = requestQueue.take(); // Blocking call
+                processRequest(connection);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 logger.error("QueueProcessor interrupted", e);
@@ -282,23 +282,19 @@ class QueueProcessor implements Runnable {
         }
     }
 
-    private void processRequest(Socket socket) {
-        try (ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())) {
-
+    private void processRequest(Connection connection) {
+        try {
             DSEngine dsEngine = DSEngine.getInstance();
-            dsEngine.acRegisterNewDs(in, out, socket);
-            
-            in.close();
-            out.close();
-            socket.close();
-        } catch (IOException e) {
+            dsEngine.acRegisterNewDs(connection.getInputStream(), connection.getOutputStream(), connection.getSocket());
+        } catch (Exception e) {
             String message = "";
             for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
                 message = message + System.lineSeparator() + stackTraceElement.toString();
             }
             logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
             e.printStackTrace();
+        } finally {
+            connection.close(); // Ensure the connection is properly closed
         }
     }
 }

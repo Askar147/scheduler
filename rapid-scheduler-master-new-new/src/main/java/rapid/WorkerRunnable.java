@@ -14,7 +14,7 @@ public class WorkerRunnable implements Runnable {
     protected String serverText = null;
     private Logger logger = Logger.getLogger(getClass());
 
-    private static BlockingQueue<Socket> requestQueue = new LinkedBlockingQueue<>();
+    private static BlockingQueue<Connection> requestQueue = new LinkedBlockingQueue<>();
 
     public WorkerRunnable(Socket clientSocket, String serverText) {
         this.clientSocket = clientSocket;
@@ -34,7 +34,7 @@ public class WorkerRunnable implements Runnable {
             ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
             out.flush();
             ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-
+            
             int command = (int) in.readByte();
 
             long threadId = Thread.currentThread().getId();
@@ -48,9 +48,10 @@ public class WorkerRunnable implements Runnable {
                     dsEngine.vmmNotifyDs(in, out);
                     break;
                 case RapidMessages.AC_REGISTER_NEW_DS:
-                    //dsEngine.acRegisterNewDs(in, out, clientSocket);
+                    // dsEngine.acRegisterNewDs(in, out, clientSocket);
                     // Add the socket to the queue
-                    requestQueue.add(clientSocket);
+                    Connection connection = new Connection(clientSocket, in, out);
+                    requestQueue.add(connection);
                     break;
                 case RapidMessages.AC_REGISTER_PREV_DS:
                     dsEngine.acRegisterPrevDs(in, out, clientSocket);
@@ -95,13 +96,11 @@ public class WorkerRunnable implements Runnable {
              * in the case of FORWARD_REQ and PARALLEL_REQ, the socket is closed
              * in the DS scheduler
              */
-            if (command != RapidMessages.FORWARD_REQ && command != RapidMessages.PARALLEL_REQ) {
+            if (command != RapidMessages.FORWARD_REQ && command != RapidMessages.PARALLEL_REQ && command != RapidMessages.AC_REGISTER_NEW_DS) {
                 in.close();
                 out.close();
                 // We do not close the clientSocket here to keep it in the queue
-                if (command != RapidMessages.AC_REGISTER_NEW_DS) {
-                    clientSocket.close();
-                }
+                clientSocket.close();
             }
 
         } catch (IOException e) {
@@ -115,7 +114,7 @@ public class WorkerRunnable implements Runnable {
 
     }
 
-    public static BlockingQueue<Socket> getRequestQueue() {
+    public static BlockingQueue<Connection> getRequestQueue() {
         return requestQueue;
     }
 }
