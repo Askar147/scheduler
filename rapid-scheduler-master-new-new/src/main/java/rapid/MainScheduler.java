@@ -273,7 +273,15 @@ class QueueProcessor implements Runnable {
         while (true) {
             try {
                 Connection connection = requestQueue.take(); // Blocking call
-                processRequest(connection);
+                boolean success = processRequest(connection);
+
+                if (!success) {
+                    // If the VM was not found, requeue the connection for another attempt
+                    requestQueue.put(connection);
+                } else {
+                    // Close the connection only if processing is complete
+                    connection.close();
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 logger.error("QueueProcessor interrupted", e);
@@ -282,10 +290,10 @@ class QueueProcessor implements Runnable {
         }
     }
 
-    private void processRequest(Connection connection) {
+    private boolean processRequest(Connection connection) {
         try {
             DSEngine dsEngine = DSEngine.getInstance();
-            dsEngine.acRegisterNewDs(connection.getInputStream(), connection.getOutputStream(), connection.getSocket());
+            return dsEngine.acRegisterNewDs(connection.getInputStream(), connection.getOutputStream(), connection.getSocket());
         } catch (Exception e) {
             String message = "";
             for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
@@ -293,8 +301,7 @@ class QueueProcessor implements Runnable {
             }
             logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
             e.printStackTrace();
-        } finally {
-            connection.close(); // Ensure the connection is properly closed
+            return false;
         }
     }
 }

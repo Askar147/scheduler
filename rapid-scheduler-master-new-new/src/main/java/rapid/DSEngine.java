@@ -207,7 +207,7 @@ public class DSEngine {
      *            ObjectOutputStream instance retrieved by the socket.
      * @param socket
      */
-    public void acRegisterNewDs(ObjectInputStream in, ObjectOutputStream out, Socket socket) {
+    public boolean acRegisterNewDs(ObjectInputStream in, ObjectOutputStream out, Socket socket) {
         try {
             long userid = in.readLong();
             int vcpuNum = in.readInt();
@@ -215,19 +215,31 @@ public class DSEngine {
             int gpuCores = in.readInt();
             String deadline = in.readUTF();
             long cycles = in.readLong();
-//            String deadline = "2022-08-05 18:19:03";
-//            int cycles=1;
 
             logger.info("AC_REGISTER_NEW_DS, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
                     + " gpuCores: " + gpuCores + " deadline: " + deadline + " cycles: " + cycles);
 
-	    logger.info("Beofore Calling THE METHOD FINDVAILMAHCINES");
-            VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles);
+	        logger.info("Beofore Calling THE METHOD FINDVAILMAHCINES");
+
+            RequestInfo requestInfo = new RequestInfo();
+            requestInfo.setAccepted(0);
+            requestInfo.setUserid(userid);
+            requestInfo.setDeadline(deadline);
+            requestInfo.setVcpu(vcpuNum);
+            requestInfo.setMemory(memSize);
+            requestInfo.setCycles(cycles);
+            long requestId = DSManager.insertRequestInfo(requestInfo);
+
+            VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles, requestId);
 
             ArrayList<String> ipList = new ArrayList<>();
             if (vmmConfig != null) {
                 ipList.add(vmmConfig.getVmmIP());
                 incrementAllocatedcpu(vmmConfig);
+            } else {
+                out.writeByte(RapidMessages.PING);
+                out.flush();
+                return false;
             }
 
             if (userid > 0) {
@@ -299,6 +311,7 @@ public class DSEngine {
 //            out.writeInt(scheduler.getSlamInfo().getPort());
             out.writeInt(scheduler.getPort());
             out.flush();
+            return true;
 
         } catch (Exception e) {
             String message = "";
@@ -614,7 +627,7 @@ public class DSEngine {
         return ipAddress;
     }
 
-    private synchronized VmmConfig findAvailMachines(long userid, int vcpuNum, int memSize, int gpuCores, String deadline, long cycles) throws IOException, InterruptedException {
+    private synchronized VmmConfig findAvailMachines(long userid, int vcpuNum, int memSize, int gpuCores, String deadline, long cycles, long requestId) throws IOException, InterruptedException {
         //TODO add scheduling decision here
         ArrayList<String> ipList = new ArrayList<String>();
         int maxCount = 5;
@@ -742,6 +755,7 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
                 selectedMemory = 128;
 
                 RequestInfo requestInfo = new RequestInfo();
+                requestInfo.setRequestid(requestId);
                 requestInfo.setAccepted(1);
                 requestInfo.setVmmid(vmmInfo.getVmmid());
                 requestInfo.setUserid(userid);
@@ -749,18 +763,19 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
                 requestInfo.setVcpu(selectedVcpu);
                 requestInfo.setMemory(selectedMemory);
                 requestInfo.setCycles(cycles);
-                DSManager.insertRequestInfo(requestInfo);
+                DSManager.updateRequestInfo(requestInfo);
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
             }
         }
 
 //        if (!allSuspended) {
         RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setRequestid(requestId);
         requestInfo.setAccepted(0);
         requestInfo.setUserid(userid);
         requestInfo.setDeadline(deadline);
         requestInfo.setCycles(cycles);
-        DSManager.insertRequestInfo(requestInfo);
+        DSManager.updateRequestInfo(requestInfo);
         return null;
 //        }
 //        else {

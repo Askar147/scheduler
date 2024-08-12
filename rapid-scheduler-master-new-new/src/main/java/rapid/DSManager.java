@@ -159,9 +159,17 @@ public class DSManager {
         return offloadHistory1;
     }
 
-    public static int insertRequestInfo(RequestInfo requestInfo) {
+    public static long insertRequestInfo(RequestInfo requestInfo) {
         SqlSession session = sqlMapper.openSession();
-        int result = session.update("DS.insertRequestInfo", requestInfo);
+        int result = session.insert("DS.insertRequestInfo", requestInfo);
+        session.commit();
+        session.close();
+        return requestInfo.getRequestid();
+    }
+
+    public static int updateRequestInfo(RequestInfo requestInfo){
+        SqlSession session = sqlMapper.openSession();
+        int result = session.update("DS.updateRequestInfo", requestInfo);
         session.commit();
         session.close();
         return result;
