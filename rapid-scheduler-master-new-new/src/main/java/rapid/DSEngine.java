@@ -311,7 +311,6 @@ public class DSEngine {
 //            out.writeInt(scheduler.getSlamInfo().getPort());
             out.writeInt(scheduler.getPort());
             out.flush();
-            return true;
 
         } catch (Exception e) {
             String message = "";
@@ -321,6 +320,8 @@ public class DSEngine {
             logger.error("Caught Exception: " + e.getMessage() + System.lineSeparator() + message);
             e.printStackTrace();
         }
+
+        return true;
     }
 
     /**
