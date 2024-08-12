@@ -283,7 +283,7 @@ public class DSEngine {
             if (ipList.size() == 0) {
                 out.writeByte(RapidMessages.ERROR);
                 out.flush();
-                return;
+                return true;
             }
 
             long newUserid = userid;
