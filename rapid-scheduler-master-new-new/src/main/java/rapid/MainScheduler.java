@@ -292,8 +292,32 @@ class QueueProcessor implements Runnable {
 
     private boolean processRequest(Connection connection) {
         try {
+            if (connection.getRequestid() == -1){
+                ObjectInputStream in = connection.getInputStream();
+                ObjectOutputStream out = connection.getOutputStream();
+                
+                long userid = in.readLong();
+                int vcpuNum = in.readInt();
+                int memSize = in.readInt();
+                int gpuCores = in.readInt();
+                String deadline = in.readUTF();
+                long cycles = in.readLong();
+                logger.info("Processing Request - userId: " + userid + ", vcpuNum: " + vcpuNum + ", memSize: " + memSize);
+
+                RequestInfo requestInfo = new RequestInfo();
+                requestInfo.setAccepted(0);
+                requestInfo.setUserid(userid);
+                requestInfo.setDeadline(deadline);
+                requestInfo.setVcpu(vcpuNum);
+                requestInfo.setMemory(memSize);
+                requestInfo.setCycles(cycles);
+                long requestId = DSManager.insertRequestInfo(requestInfo);
+
+                connection.setRequestid(requestId);
+            }
+
             DSEngine dsEngine = DSEngine.getInstance();
-            return dsEngine.acRegisterNewDs(connection.getInputStream(), connection.getOutputStream(), connection.getSocket());
+            return dsEngine.acRegisterNewDs(connection.getInputStream(), connection.getOutputStream(), connection.getSocket(), connection.getRequestid());
         } catch (Exception e) {
             String message = "";
             for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {

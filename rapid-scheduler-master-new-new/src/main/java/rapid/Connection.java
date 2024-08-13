@@ -9,6 +9,7 @@ public class Connection {
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
+    private long requestid = -1; // Default value indicating no request ID
 
     public Connection(Socket socket, ObjectInputStream in, ObjectOutputStream out) throws IOException {
         this.socket = socket;
@@ -27,6 +28,14 @@ public class Connection {
 
     public ObjectOutputStream getOutputStream() {
         return out;
+    }
+
+    public long getRequestid() {
+        return requestid;
+    }
+
+    public void setRequestid(long requestid) {
+        this.requestid = requestid;
     }
 
     public void close() {

@@ -207,29 +207,16 @@ public class DSEngine {
      *            ObjectOutputStream instance retrieved by the socket.
      * @param socket
      */
-    public boolean acRegisterNewDs(ObjectInputStream in, ObjectOutputStream out, Socket socket) {
+    public boolean acRegisterNewDs(ObjectInputStream in, ObjectOutputStream out, Socket socket, long requestId) {
         try {
-            long userid = in.readLong();
-            int vcpuNum = in.readInt();
-            int memSize = in.readInt();
-            int gpuCores = in.readInt();
-            String deadline = in.readUTF();
-            long cycles = in.readLong();
+            RequestInfo requestInfo = DSManager.getRequestInfo(requestId);
 
-            logger.info("AC_REGISTER_NEW_DS, userId: " + userid + " vcpuNum: " + vcpuNum + " memSize: " + memSize
-                    + " gpuCores: " + gpuCores + " deadline: " + deadline + " cycles: " + cycles);
-
-	        logger.info("Beofore Calling THE METHOD FINDVAILMAHCINES");
-
-            RequestInfo requestInfo = new RequestInfo();
-            requestInfo.setAccepted(0);
-            requestInfo.setUserid(userid);
-            requestInfo.setDeadline(deadline);
-            requestInfo.setVcpu(vcpuNum);
-            requestInfo.setMemory(memSize);
-            requestInfo.setCycles(cycles);
-            long requestId = DSManager.insertRequestInfo(requestInfo);
-
+	        long userid = requestInfo.getUserid();
+            int vcpuNum = requestInfo.getVcpu();
+            int memSize = requestInfo.getMemory();
+            int gpuCores = requestInfo.getGpunums();
+            String deadline = requestInfo.getDeadline();
+            long cycles = requestInfo.getCycles();
             VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles, requestId);
 
             ArrayList<String> ipList = new ArrayList<>();
@@ -237,8 +224,6 @@ public class DSEngine {
                 ipList.add(vmmConfig.getVmmIP());
                 incrementAllocatedcpu(vmmConfig);
             } else {
-                out.writeByte(RapidMessages.PING);
-                out.flush();
                 return false;
             }
 
