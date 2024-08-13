@@ -175,6 +175,15 @@ public class DSManager {
         return result;
     }
 
+    public static RequestInfo getRequestInfo(long requestid) {
+        SqlSession session = sqlMapper.openSession();
+        try {
+            return session.selectOne("DS.getRequestInfo", requestid);
+        } finally {
+            session.close();
+        }
+    }
+
     public static int insertWolHistory(WolHistory wolHistory) {
         SqlSession session = sqlMapper.openSession();
         int result = session.update("DS.insertWolHistory", wolHistory);

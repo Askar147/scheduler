@@ -159,7 +159,7 @@
         </selectKey>
     </insert>
 
-        <!-- New updateRequestInfo mapping -->
+    <!-- New updateRequestInfo mapping -->
     <update id="updateRequestInfo" parameterType="rapid.RequestInfo">
         update request_info
         set
@@ -172,6 +172,24 @@
             cycles = #{cycles}
         where requestid = #{requestid}
     </update>
+
+    <!-- New getRequestInfo mapping -->
+    <select id="getRequestInfo" parameterType="long" resultType="rapid.RequestInfo">
+        SELECT
+            requestid,
+            accepted,
+            vmmid,
+            userid,
+            deadline,
+            vcpu,
+            memory,
+            cycles,
+            timestamp
+        FROM
+            request_info
+        WHERE
+            requestid = #{requestid}
+    </select>
 
     <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
         insert into wol_history
