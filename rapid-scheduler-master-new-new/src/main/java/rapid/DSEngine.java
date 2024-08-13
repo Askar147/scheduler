@@ -213,8 +213,8 @@ public class DSEngine {
 
 	        long userid = requestInfo.getUserid();
             int vcpuNum = requestInfo.getVcpu();
-            int memSize = requestInfo.getMemory();
-            int gpuCores = requestInfo.getGpunums();
+            int memSize = (int) requestInfo.getMemory();
+            int gpuCores = 0; //TODO: Change to a variable
             String deadline = requestInfo.getDeadline();
             long cycles = requestInfo.getCycles();
             VmmConfig vmmConfig = dsEngine.findAvailMachines(userid, vcpuNum, memSize, gpuCores, deadline, cycles, requestId);
