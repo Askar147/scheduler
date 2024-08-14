@@ -299,13 +299,10 @@ class QueueProcessor implements Runnable {
             boolean success = processRequest(connection);
 
             if (!success) {
-                if (connection.canRetry()) {
-                    connection.incrementRetryCount();
-                    requestQueue.offer(connection); // Requeue for retry
-                } else {
-                    connection.close();
-                }
+                // If the VM was not found, requeue the connection for another attempt
+                requestQueue.put(connection);
             } else {
+                // Close the connection only if processing is complete
                 connection.close();
             }
         }
@@ -333,6 +330,11 @@ class QueueProcessor implements Runnable {
                 requestInfo.setVcpu(vcpuNum);
                 requestInfo.setMemory(memSize);
                 requestInfo.setCycles(cycles);
+
+                LocalDateTime currentDateTime = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                requestInfo.setStartQueueTime(currentDateTime.format(formatter).toString());
+
                 long requestId = DSManager.insertRequestInfo(requestInfo);
 
                 connection.setRequestid(requestId);
