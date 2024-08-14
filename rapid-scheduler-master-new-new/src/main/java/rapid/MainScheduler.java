@@ -274,20 +274,39 @@ class QueueProcessor implements Runnable {
     public void run() {
         while (true) {
             try {
-                Connection connection = requestQueue.take(); // Blocking call
-                boolean success = processRequest(connection);
-
-                if (!success) {
-                    // If the VM was not found, requeue the connection for another attempt
-                    requestQueue.put(connection);
-                } else {
-                    // Close the connection only if processing is complete
-                    connection.close();
+                int queueSize = requestQueue.size();
+                logger.info("Queue Size = " + queueSize);
+                if (queueSize > 0) {
+                    processBatchRequests(queueSize);
                 }
+                
+                long sleepTime = Math.max(MIN_SLEEP_TIME, MAX_SLEEP_TIME - queueSize * 10);
+                logger.info("Queue Sleep For = " + sleepTime);
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 logger.error("QueueProcessor interrupted", e);
                 break;
+            }
+        }
+    }
+
+    private void processBatchRequests(int queueSize) {
+        List<Connection> batch = new ArrayList<>();
+        requestQueue.drainTo(batch, Math.min(MAX_BATCH_SIZE, queueSize));
+
+        for (Connection connection : batch) {
+            boolean success = processRequest(connection);
+
+            if (!success) {
+                if (connection.canRetry()) {
+                    connection.incrementRetryCount();
+                    requestQueue.offer(connection); // Requeue for retry
+                } else {
+                    connection.close();
+                }
+            } else {
+                connection.close();
             }
         }
     }
