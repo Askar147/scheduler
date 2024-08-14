@@ -171,7 +171,7 @@
             memory = #{memory},
             cycles = #{cycles},
             startQueueTime = TIMESTAMP(#{startQueueTime}),
-            endQueueTime = TIMESTAMP(#{startQueueTime})
+            endQueueTime = TIMESTAMP(#{endQueueTime})
         where requestid = #{requestid}
     </update>
 
