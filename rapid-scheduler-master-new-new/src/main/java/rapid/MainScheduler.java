@@ -8,6 +8,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.time.LocalDateTime;  
+import java.time.format.DateTimeFormatter;  
 
 import org.apache.log4j.Logger;
 
@@ -292,10 +294,11 @@ class QueueProcessor implements Runnable {
 
     private boolean processRequest(Connection connection) {
         try {
+
+            ObjectInputStream in = connection.getInputStream();
+            ObjectOutputStream out = connection.getOutputStream();
+
             if (connection.getRequestid() == -1){
-                ObjectInputStream in = connection.getInputStream();
-                ObjectOutputStream out = connection.getOutputStream();
-                
                 long userid = in.readLong();
                 int vcpuNum = in.readInt();
                 int memSize = in.readInt();
@@ -314,6 +317,19 @@ class QueueProcessor implements Runnable {
                 long requestId = DSManager.insertRequestInfo(requestInfo);
 
                 connection.setRequestid(requestId);
+            }
+
+            RequestInfo addedRequestInfo = DSManager.getRequestInfo(connection.getRequestid());
+
+            LocalDateTime deadlineTime = LocalDateTime.parse(addedRequestInfo.getDeadline(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+            // Compare with the current time
+            if (deadlineTime.isBefore(LocalDateTime.now())) {
+                logger.error("Request rejected due to expired deadline: " + deadline);
+                out.writeByte(RapidMessages.ERROR);
+                out.flush();
+                connection.close();
+                return false;
             }
 
             DSEngine dsEngine = DSEngine.getInstance();
