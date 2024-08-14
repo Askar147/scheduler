@@ -270,8 +270,8 @@ class QueueProcessor implements Runnable {
     private static Logger logger = Logger.getLogger(QueueProcessor.class);
     private BlockingQueue<Connection> requestQueue;
     private static final int MAX_BATCH_SIZE = 10;  // Maximum number of connections to process in one batch
-    private static final int MIN_SLEEP_TIME = 10;  // Minimum sleep time in milliseconds
-    private static final int MAX_SLEEP_TIME = 1000;  // Maximum sleep time in milliseconds
+    private static final int MIN_SLEEP_TIME = 100;  // Minimum sleep time in milliseconds
+    private static final int MAX_SLEEP_TIME = 3000;  // Maximum sleep time in milliseconds
 
 
     public QueueProcessor(BlockingQueue<Connection> requestQueue) {
