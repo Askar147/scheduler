@@ -89,7 +89,7 @@ public class RequestInfo {
         return endQueueTime;
     }
 
-    public void setStartQueueTime(String endTime){
+    public void setEndQueueTime(String endTime){
         this.endQueueTime = endTime;
     }
 }

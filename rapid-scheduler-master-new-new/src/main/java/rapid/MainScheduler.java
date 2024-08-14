@@ -1,8 +1,11 @@
 package rapid;
 
+import eu.project.rapid.common.RapidMessages;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -266,6 +269,10 @@ class AdjustIdleVmms extends TimerTask {
 class QueueProcessor implements Runnable {
     private static Logger logger = Logger.getLogger(QueueProcessor.class);
     private BlockingQueue<Connection> requestQueue;
+    private static final int MAX_BATCH_SIZE = 10;  // Maximum number of connections to process in one batch
+    private static final int MIN_SLEEP_TIME = 10;  // Minimum sleep time in milliseconds
+    private static final int MAX_SLEEP_TIME = 1000;  // Maximum sleep time in milliseconds
+
 
     public QueueProcessor(BlockingQueue<Connection> requestQueue) {
         this.requestQueue = requestQueue;
@@ -346,7 +353,7 @@ class QueueProcessor implements Runnable {
 
             // Compare with the current time
             if (deadlineTime.isBefore(LocalDateTime.now())) {
-                logger.error("Request rejected due to expired deadline: " + deadline);
+                logger.error("Request rejected due to expired deadline: " + deadlineTime);
                 out.writeByte(RapidMessages.ERROR);
                 out.flush();
                 return true;
