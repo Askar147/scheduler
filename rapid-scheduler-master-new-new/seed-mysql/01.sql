@@ -147,7 +147,8 @@ CREATE TABLE `request_info` (
    `memory` int(11) NOT NULL,
    `cycles` bigint(11) NOT NULL,
    `timestamp` timestamp NULL DEFAULT NULL,
-   `queueTime` bigint(20) DEFAULT NULL, -- Added column for queue time
+   `startQueueTime` timestamp NULL DEFAULT NULL, -- Added column for queue time
+   `endQueueTime` timestamp NULL DEFAULT NULL, -- Added column for queue time
    PRIMARY KEY (`requestid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 

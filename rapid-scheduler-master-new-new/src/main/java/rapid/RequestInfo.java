@@ -10,6 +10,8 @@ public class RequestInfo {
     private int vcpu;
     private long memory;
     private long cycles;
+    private String startQueueTime;
+    private String endQueueTime;
 
     public long getRequestid() {
         return requestid;
@@ -73,5 +75,21 @@ public class RequestInfo {
 
     public void setAccepted(int accepted) {
         this.accepted = accepted;
+    }
+
+    public String getStartQueueTime(){
+        return startQueueTime;
+    }
+
+    public void setStartQueueTime(String startTime){
+        this.startQueueTime = startTime;
+    }
+
+    public String getEndQueueTime(){
+        return endQueueTime;
+    }
+
+    public void setStartQueueTime(String endTime){
+        this.endQueueTime = endTime;
     }
 }
