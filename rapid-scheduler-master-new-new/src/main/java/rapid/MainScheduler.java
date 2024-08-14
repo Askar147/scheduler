@@ -328,8 +328,7 @@ class QueueProcessor implements Runnable {
                 logger.error("Request rejected due to expired deadline: " + deadline);
                 out.writeByte(RapidMessages.ERROR);
                 out.flush();
-                connection.close();
-                return false;
+                return true;
             }
 
             DSEngine dsEngine = DSEngine.getInstance();
