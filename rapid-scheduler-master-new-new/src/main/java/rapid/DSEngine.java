@@ -744,8 +744,7 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
                 requestInfo.setAccepted(1);
                 requestInfo.setVmmid(vmmInfo.getVmmid());
                 LocalDateTime currentDateTime = LocalDateTime.now();
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                requestInfo.setQueueEndTime(currentDateTime.format(formatter).toString());
+                requestInfo.setEndQueueTime(currentDateTime.format(formatter).toString());
                 DSManager.updateRequestInfo(requestInfo);
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
             }
