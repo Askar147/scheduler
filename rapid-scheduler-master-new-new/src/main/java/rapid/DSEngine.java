@@ -740,27 +740,20 @@ logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
 //                selectedVcpu = 100;
                 selectedMemory = 128;
 
-                RequestInfo requestInfo = new RequestInfo();
-                requestInfo.setRequestid(requestId);
+                RequestInfo requestInfo = DSManager.getRequestInfo(requestId);
                 requestInfo.setAccepted(1);
                 requestInfo.setVmmid(vmmInfo.getVmmid());
-                requestInfo.setUserid(userid);
-                requestInfo.setDeadline(deadline);
-                requestInfo.setVcpu(selectedVcpu);
-                requestInfo.setMemory(selectedMemory);
-                requestInfo.setCycles(cycles);
+                LocalDateTime currentDateTime = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                requestInfo.setQueueEndTime(currentDateTime.format(formatter).toString());
                 DSManager.updateRequestInfo(requestInfo);
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
             }
         }
 
 //        if (!allSuspended) {
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setRequestid(requestId);
+        RequestInfo requestInfo = DSManager.getRequestInfo(requestId);
         requestInfo.setAccepted(0);
-        requestInfo.setUserid(userid);
-        requestInfo.setDeadline(deadline);
-        requestInfo.setCycles(cycles);
         DSManager.updateRequestInfo(requestInfo);
         return null;
 //        }
