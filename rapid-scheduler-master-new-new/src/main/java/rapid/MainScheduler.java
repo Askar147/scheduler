@@ -298,7 +298,7 @@ class QueueProcessor implements Runnable {
         }
     }
 
-    private void processBatchRequests(int queueSize) {
+    private void processBatchRequests(int queueSize) throws InterruptedException {
         List<Connection> batch = new ArrayList<>();
         requestQueue.drainTo(batch, Math.min(MAX_BATCH_SIZE, queueSize));
 
