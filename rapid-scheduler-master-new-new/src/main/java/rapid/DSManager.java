@@ -184,7 +184,7 @@ public class DSManager {
         }
     }
 
-    public statis List<RequestInfo> getAllRequestInfos(){
+    public static List<RequestInfo> getAllRequestInfos(){
         SqlSession session = sqlMapper.openSession();
         try {
             return session.selectList("DS.getAllRequestInfos");

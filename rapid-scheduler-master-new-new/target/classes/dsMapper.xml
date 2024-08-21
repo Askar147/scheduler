@@ -150,14 +150,71 @@
 
     <insert id="insertRequestInfo" parameterType="rapid.RequestInfo" useGeneratedKeys="true" keyProperty="requestid" keyColumn="requestid">
         insert into request_info
-        (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp)
+        (accepted, vmmid, userid, deadline, vcpu, memory, cycles, timestamp, startQueueTime, endQueueTime)
         values
-        (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now())
+        (#{accepted}, #{vmmid}, #{userid}, TIMESTAMP(#{deadline}), #{vcpu}, #{memory}, #{cycles},  now(), TIMESTAMP(#{startQueueTime}), TIMESTAMP(#{endQueueTime}))
 
         <selectKey keyProperty="requestid" resultType="long" order="AFTER">
             select LAST_INSERT_ID();
         </selectKey>
     </insert>
+
+    <!-- New updateRequestInfo mapping -->
+    <update id="updateRequestInfo" parameterType="rapid.RequestInfo">
+        update request_info
+        set
+            accepted = #{accepted},
+            vmmid = #{vmmid},
+            userid = #{userid},
+            deadline = TIMESTAMP(#{deadline}),
+            vcpu = #{vcpu},
+            memory = #{memory},
+            cycles = #{cycles},
+            startQueueTime = TIMESTAMP(#{startQueueTime}),
+            endQueueTime = TIMESTAMP(#{endQueueTime})
+        where requestid = #{requestid}
+    </update>
+
+    <!-- New getRequestInfo mapping -->
+    <select id="getRequestInfo" parameterType="long" resultType="rapid.RequestInfo">
+        SELECT
+            requestid,
+            accepted,
+            vmmid,
+            userid,
+            deadline,
+            vcpu,
+            memory,
+            cycles,
+            timestamp,
+            startQueueTime,
+            endQueueTime
+        FROM
+            request_info
+        WHERE
+            requestid = #{requestid}
+    </select>
+
+    <!-- Fetch all RequestInfos with startQueueTime and endQueueTime -->
+    <select id="getAllRequestInfos" resultType="rapid.RequestInfo">
+        SELECT
+            requestid,
+            accepted,
+            vmmid,
+            userid,
+            deadline,
+            vcpu,
+            memory,
+            cycles,
+            timestamp,
+            startQueueTime,
+            endQueueTime
+        FROM
+            request_info
+        WHERE
+            startQueueTime IS NOT NULL
+            AND endQueueTime IS NOT NULL
+    </select>
 
     <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
         insert into wol_history
@@ -176,9 +233,9 @@
 
     <insert id="insertGlobalReading" parameterType="rapid.GlobalReadings">
         insert into globalreadings
-        (activevmms, allocatedcpu, powerusagesum, powerusageavg, timestamp)
+        (activevmms, allocatedcpu, powerusagesum, powerusageavg, turnaroundSum, turnaroundAvg, timestamp)
         values
-        (#{activevmms}, #{allocatedcpu}, #{powerusagesum}, #{powerusageavg}, now())
+        (#{activevmms}, #{allocatedcpu}, #{powerusagesum}, #{powerusageavg}, #{turnaroundSum}, #{turnaroundAvg}, now())
     </insert>
 
     <select id="predictWorkload" resultType="float">

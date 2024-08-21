@@ -12,7 +12,8 @@ import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.time.LocalDateTime;  
-import java.time.format.DateTimeFormatter;  
+import java.time.format.DateTimeFormatter;
+import java.time.Duration;  
 
 import org.apache.log4j.Logger;
 
@@ -189,11 +190,37 @@ class CalculateAverageAllocatedCpu extends TimerTask {
             averagePowerUsage = (float) totalPowerUsage / activeVmms;
         }
 
+        //Calculate TurnaroundTime also
+        List<RequestInfo> requestInfos = DSManager.getAllRequestInfos();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        int totalSeconds = 0;
+        int count = 0;
+
+        for (RequestInfo requestInfo : requestInfos) {
+            String startQueueTime = requestInfo.getStartQueueTime();
+            String endQueueTime = requestInfo.getEndQueueTime();
+
+            if (startQueueTime != null && endQueueTime != null) {
+                LocalDateTime start = LocalDateTime.parse(startQueueTime, formatter);
+                LocalDateTime end = LocalDateTime.parse(endQueueTime, formatter);
+
+                long durationInSeconds = Duration.between(start, end).getSeconds();
+                totalSeconds += durationInSeconds;
+                count++;
+            }
+        }
+
+        float averageSeconds = count > 0 ? (float) totalSeconds / count : 0;
+
         GlobalReadings globalReadings = new GlobalReadings();
         globalReadings.setActivevmms(activeVmms);
         globalReadings.setAllocatedcpu(averageAllocatedCpu);
         globalReadings.setPowerusagesum(totalPowerUsage);
         globalReadings.setPowerusageavg(averagePowerUsage);
+        globalReadings.setTurnaroundSum(totalSeconds);
+        globalReadings.setTurnaroundAvg(averageSeconds);
+
         DSManager.insertGlobalReading(globalReadings);
 
         logger.info("Inserted current global readings into the database.AND SEQUENTIONAL");
