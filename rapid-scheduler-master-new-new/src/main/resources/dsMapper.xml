@@ -233,9 +233,9 @@
 
     <insert id="insertGlobalReading" parameterType="rapid.GlobalReadings">
         insert into globalreadings
-        (activevmms, allocatedcpu, powerusagesum, powerusageavg, timestamp)
+        (activevmms, allocatedcpu, powerusagesum, powerusageavg, turnaroundSum, turnaroundAvg, timestamp)
         values
-        (#{activevmms}, #{allocatedcpu}, #{powerusagesum}, #{powerusageavg}, now())
+        (#{activevmms}, #{allocatedcpu}, #{powerusagesum}, #{powerusageavg}, #{turnaroundSum}, #{turnaroundAvg}, now())
     </insert>
 
     <select id="predictWorkload" resultType="float">

@@ -8,6 +8,24 @@ public class GlobalReadings {
     private float allocatedcpu;
     private int powerusagesum;
     private float powerusageavg;
+    private int turnaroundSum;
+    private float turnaroundAvg;
+
+    public int getTurnaroundSum() {
+        return turnaroundSum;
+    }
+
+    public void setTurnaroundSum(int turnaroundSum) {
+        this.turnaroundSum = turnaroundSum;
+    }
+
+    public float getTurnaroundAvg() {
+        return turnaroundAvg;
+    }
+
+    public void setTurnaroundAvg(float turnaroundAvg) {
+        this.turnaroundAvg = turnaroundAvg;
+    }
 
     public int getActivevmms() {
         return activevmms;
