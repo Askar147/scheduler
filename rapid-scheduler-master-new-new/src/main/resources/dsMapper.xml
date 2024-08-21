@@ -195,6 +195,27 @@
             requestid = #{requestid}
     </select>
 
+    <!-- Fetch all RequestInfos with startQueueTime and endQueueTime -->
+    <select id="getAllRequestInfos" resultType="rapid.RequestInfo">
+        SELECT
+            requestid,
+            accepted,
+            vmmid,
+            userid,
+            deadline,
+            vcpu,
+            memory,
+            cycles,
+            timestamp,
+            startQueueTime,
+            endQueueTime
+        FROM
+            request_info
+        WHERE
+            startQueueTime IS NOT NULL
+            AND endQueueTime IS NOT NULL
+    </select>
+
     <insert id="insertWolHistory" parameterType="rapid.WolHistory" useGeneratedKeys="true" keyProperty="wolid" keyColumn="wolid">
         insert into wol_history
         (vmmid, iswol, timestamp)

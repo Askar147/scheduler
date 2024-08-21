@@ -184,6 +184,15 @@ public class DSManager {
         }
     }
 
+    public statis List<RequestInfo> getAllRequestInfos(){
+        SqlSession session = sqlMapper.openSession();
+        try {
+            return session.selectList("DS.getAllRequestInfos");
+        } finally {
+            session.close();
+        }
+    }
+
     public static int insertWolHistory(WolHistory wolHistory) {
         SqlSession session = sqlMapper.openSession();
         int result = session.update("DS.insertWolHistory", wolHistory);
