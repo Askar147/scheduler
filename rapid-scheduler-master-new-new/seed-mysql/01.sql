@@ -174,7 +174,7 @@ CREATE TABLE `globalreadings` (
    `powerusagesum` int(11) DEFAULT 0,
    `powerusageavg` float DEFAULT 0,
    'turnaroundSum' int(11) DEFAULT 0,
-   'turnaroundAvg' float DEFAULT 0,
-   `timestamp` timestamp NULL DEFAULT NULL,
+   'turnaroundAvg' float DEFAULT 0.0,
+   `timestamp` timestamp NULL DEFAULT NULL
    PRIMARY KEY (`glid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
