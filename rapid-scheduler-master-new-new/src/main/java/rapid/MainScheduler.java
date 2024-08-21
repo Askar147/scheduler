@@ -267,12 +267,11 @@ class AdjustIdleVmms extends TimerTask {
 
 }
 class QueueProcessor implements Runnable {
-    private static Logger logger = Logger.getLogger(QueueProcessor.class);
+    private static final Logger logger = Logger.getLogger(QueueProcessor.class);
     private BlockingQueue<Connection> requestQueue;
     private static final int MAX_BATCH_SIZE = 10;  // Maximum number of connections to process in one batch
     private static final int MIN_SLEEP_TIME = 100;  // Minimum sleep time in milliseconds
     private static final int MAX_SLEEP_TIME = 3000;  // Maximum sleep time in milliseconds
-
 
     public QueueProcessor(BlockingQueue<Connection> requestQueue) {
         this.requestQueue = requestQueue;
@@ -284,7 +283,7 @@ class QueueProcessor implements Runnable {
                 int queueSize = requestQueue.size();
                 logger.info("Queue Size = " + queueSize);
                 if (queueSize > 0) {
-                    processBatchRequests(queueSize);
+                    processBatchRequests();
                 }
                 
                 long sleepTime = Math.max(MIN_SLEEP_TIME, MAX_SLEEP_TIME - queueSize * 10);
@@ -298,30 +297,33 @@ class QueueProcessor implements Runnable {
         }
     }
 
-    private void processBatchRequests(int queueSize) throws InterruptedException {
-        List<Connection> batch = new ArrayList<>();
-        requestQueue.drainTo(batch, Math.min(MAX_BATCH_SIZE, queueSize));
+    private void processBatchRequests() throws InterruptedException {
+        for (int i = 0; i < MAX_BATCH_SIZE && !requestQueue.isEmpty(); i++) {
+            Connection connection = requestQueue.peek();  // Peek at the front of the queue without removing
 
-        for (Connection connection : batch) {
+            if (connection == null) {
+                break;  // Exit if the queue is empty
+            }
+
             boolean success = processRequest(connection);
 
-            if (!success) {
-                // If the VM was not found, requeue the connection for another attempt
-                requestQueue.put(connection);
+            if (success) {
+                requestQueue.poll();  // Remove the connection from the queue only if processing was successful
+                connection.close();   // Close the connection after successful processing
             } else {
-                // Close the connection only if processing is complete
-                connection.close();
+                // If processing is not successful, keep the connection at the front of the queue
+                logger.info("Connection not processed, keeping it in the front of the queue");
+                break;  // Stop processing further, let the failed connection retry
             }
         }
     }
 
     private boolean processRequest(Connection connection) {
         try {
-
             ObjectInputStream in = connection.getInputStream();
             ObjectOutputStream out = connection.getOutputStream();
 
-            if (connection.getRequestid() == -1){
+            if (connection.getRequestid() == -1) {
                 long userid = in.readLong();
                 int vcpuNum = in.readInt();
                 int memSize = in.readInt();
