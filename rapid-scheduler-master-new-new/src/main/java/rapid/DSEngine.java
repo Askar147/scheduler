@@ -2,6 +2,7 @@ package rapid;
 
 import eu.project.rapid.common.RapidMessages;
 import org.apache.log4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.*;
 import java.net.*;
@@ -10,10 +11,18 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.io.IOException;
 
 public class DSEngine {
     private static DSEngine dsEngine = new DSEngine();
     private Logger logger = Logger.getLogger(getClass());
+    private static final String apiUrl = "http://dqn:8000/predict";
 
     private final static Map<Long, Float> allocatedCpu = Collections.synchronizedMap(new HashMap<Long, Float>());
 
@@ -613,6 +622,55 @@ public class DSEngine {
         return ipAddress;
     }
 
+	private static String sendPostRequest(String jsonInputString) {
+    HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10)) // Set connection timeout
+            .build();
+
+    HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(apiUrl)) // Use the apiUrl field for the URI
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(jsonInputString))
+            .build();
+
+    try {
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return response.body(); // Return the response body as a String
+    } catch (IOException e) {
+        return null; // Or handle this error in another appropriate way
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt(); // Preserve interrupt status
+        return null;
+    }
+}
+
+    public long getNodeDecision(List<Long> vmmid, List<Integer> cpuload, List<Float> allocatedcpu, List<Long> freemem, List<Long> availmem, List<Integer> powerusage) {
+        try {
+            Map<String, List<Float>> stats = new HashMap<>();
+            stats.put("vmmid", vmmid.stream().map(Long::floatValue).collect(Collectors.toList()));
+            stats.put("cpuload", cpuload.stream().map(Integer::floatValue).collect(Collectors.toList()));
+            stats.put("allocatedcpu", allocatedcpu);
+            stats.put("freemem", freemem.stream().map(Long::floatValue).collect(Collectors.toList()));
+            stats.put("availmem", availmem.stream().map(Long::floatValue).collect(Collectors.toList()));
+            stats.put("powerusage", powerusage.stream().map(Integer::floatValue).collect(Collectors.toList()));
+
+            String jsonInputString = new ObjectMapper().writeValueAsString(stats);
+	    
+         
+            String response = sendPostRequest(jsonInputString);
+            System.out.println("Response from server: " + response);
+	        ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> responseMap = mapper.readValue(response, Map.class);
+
+            long action = ((Number) responseMap.get("action")).longValue();
+            return action;
+
+        } catch (IOException e) {
+            logger.error("Error in getNodeDecision: ", e);
+            return -1;
+        }
+    }
+
     private synchronized VmmConfig findAvailMachines(long userid, int vcpuNum, int memSize, int gpuCores, String deadline, long cycles, long requestId) throws IOException, InterruptedException {
         //TODO add scheduling decision here
         ArrayList<String> ipList = new ArrayList<String>();
@@ -675,6 +733,70 @@ public class DSEngine {
                 DSManager.updateRequestInfo(requestInfo);
                 return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
             }
+        }
+
+        RequestInfo requestInfo = DSManager.getRequestInfo(requestId);
+        requestInfo.setAccepted(0);
+        DSManager.updateRequestInfo(requestInfo);
+        return null;
+    }
+
+    private synchronized VmmConfig findAvailMachinesDQN(long userid, int vcpuNum, int memSize, int gpuCores, String deadline, long cycles, long requestId) throws IOException, InterruptedException {
+        List<VmmInfo> vmmInfoList = DSManager.vmmInfoListByHighAllocatedCpu();
+        boolean allSuspended = true;
+	int minvcpu = 40;
+        List<Long> vmmid = new ArrayList<>();
+        List<Integer> cpuload = new ArrayList<>();
+        List<Float> allocatedcpu = new ArrayList<>();
+        List<Long> freemem = new ArrayList<>();
+        List<Long> availmem = new ArrayList<>();
+        List<Integer> powerusage = new ArrayList<>();
+
+        for (VmmInfo vmmInfo : vmmInfoList) {
+            if (vmmInfo.getSuspended() == 0) {
+                long millionCycles = cycles / 1000000;
+                logger.info("CURRENT ALLOC CPU: " + vmmInfo.getAllocatedcpu());
+                int minExecTime = (int) Math.ceil((double) millionCycles / (vmmInfo.getCpufrequency() * Math.min((double) vmmInfo.getCpunums() * ((100 - vmmInfo.getAllocatedcpu()) / 100.0), 1.0)));
+                logger.info("DECIDING vmmid: " + vmmInfo.getVmmid());
+                logger.info("minExecTime: " + minExecTime);
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime deadlineLDT = LocalDateTime.parse(deadline, formatter);
+                long allowedTime = ChronoUnit.SECONDS.between(LocalDateTime.now(), deadlineLDT);
+                logger.info("allowedTime: " + allowedTime);
+
+                if (minExecTime < 1 || minExecTime > allowedTime || vmmInfo.getAllocatedcpu() > (100 - (double) minvcpu / vmmInfo.getCpunums())) {
+                    logger.info("machine vmmid=" + vmmInfo.getVmmid() + " is NOT suitable!");
+                    continue;
+                }
+
+                vmmid.add(vmmInfo.getVmmid());
+                cpuload.add(vmmInfo.getCpuload());
+                allocatedcpu.add(vmmInfo.getAllocatedcpu());
+                freemem.add(vmmInfo.getFreemem());
+                availmem.add(vmmInfo.getAvailmem());
+                powerusage.add(vmmInfo.getPowerusage());
+                allSuspended = false;
+            }
+        }
+
+        long chosen_vmmid = getNodeDecision(vmmid, cpuload, allocatedcpu, freemem, availmem, powerusage);
+        VmmInfo vmmInfo = vmmInfoList.stream().filter(info -> info.getVmmid() == chosen_vmmid).findFirst().orElse(null);
+
+        if (vmmInfo != null && !allSuspended) {
+            int selectedVcpu = vcpuNum;
+            String selectedVmmIp = vmmInfo.getIpv4();
+            int selectedMemory = memSize;
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            RequestInfo requestInfo = DSManager.getRequestInfo(requestId);
+            requestInfo.setAccepted(1);
+            requestInfo.setVmmid(vmmInfo.getVmmid());
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            requestInfo.setEndQueueTime(currentDateTime.format(formatter).toString());
+            DSManager.updateRequestInfo(requestInfo);
+
+            return new VmmConfig(selectedVmmIp, selectedVcpu, selectedMemory);
         }
 
         RequestInfo requestInfo = DSManager.getRequestInfo(requestId);
