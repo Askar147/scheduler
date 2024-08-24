@@ -677,9 +677,6 @@ public class DSEngine {
         int maxCount = 5;
 
         List<VmmInfo> vmmInfoList = DSManager.vmmInfoListByHighAllocatedCpu();
-
-        Collections.shuffle(vmmInfoList);
-
         boolean allSuspended = true;
 
         String selectedVmmIp = "";
@@ -691,8 +688,6 @@ public class DSEngine {
         logger.info("Before Entering the loop in THE METHOD FINDVAILMAHCINES");
         for (VmmInfo vmmInfo: vmmInfoList) {
             if (vmmInfo.getSuspended() == 0) {
-		//TODO:PYTHON CONNECT
-
                 allSuspended = false;
                 long millionCycles = cycles / 1000000;
                 logger.info("CURRENT ALLOC CPU: " + vmmInfo.getAllocatedcpu());
